@@ -1,0 +1,331 @@
+{
+  "name": "MAXXAM AI \u2014 Newsletter Signup Form",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## MAXXAM AI \u2014 Newsletter Signup Form\n\n**Purpose:** Capture new subscribers for The MAXXAM AI Brief.\n\n**Form URL:**\n`https://tinyurl.com/maxxam-newsletter-signup`\n\n**Google Sheet:** Newsletter_Subscribers tab\n**Sheet ID:** `1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE`\n**Credential:** Mxai Sheets Auth\n**Gmail Credential:** MXAI Gmail\n\n**Headers (Row 1):** ID | First Name | Email | Phone | Signup Date | Status | Source | Sent Count | Last Sent",
+        "width": 540,
+        "height": 300,
+        "color": 5
+      },
+      "id": "bb100000-0000-4000-a000-000000000001",
+      "name": "Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Subscribe to The MAXXAM AI Brief",
+        "formDescription": "Weekly AI automation insights for healthcare practices and business owners. No fluff. Just systems that save time and grow revenue.\n\nBy subscribing, you agree to our <a href=\"https://n8n.srv918553.hstgr.cloud/webhook/maxxam-privacy-policy\" target=\"_blank\">Privacy Policy</a> and <a href=\"https://n8n.srv918553.hstgr.cloud/webhook/maxxam-terms-of-service\" target=\"_blank\">Terms of Service</a>.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "First Name",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "Enter your first name"
+            },
+            {
+              "fieldLabel": "Email Address",
+              "fieldType": "email",
+              "requiredField": true,
+              "placeholder": "you@example.com"
+            },
+            {
+              "fieldLabel": "Phone Number",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "+1 (555) 000-0000",
+              "fieldDescription": "Optional \u2014 used for SMS reminders and follow-ups"
+            },
+            {
+              "fieldLabel": "I agree to the Privacy Policy and Terms of Service and consent to receive email newsletters and SMS communications from MAXXAM AI.",
+              "fieldType": "checkbox",
+              "requiredField": true
+            }
+          ]
+        },
+        "path": "maxxam-newsletter-signup",
+        "responseMode": "lastNode",
+        "options": {
+          "formSubmitButtonLabel": "Subscribe \u2192 Free"
+        }
+      },
+      "id": "bb200000-0000-4000-a000-000000000002",
+      "name": "Signup Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "maxxam-newsletter-signup"
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Validate & Normalize stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "bb300000-0000-4000-a000-000000000003",
+      "name": "Validate & Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Newsletter_Subscribers",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "bb400000-0000-4000-a000-000000000004",
+      "name": "Read Subscribers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "Mxai Sheets Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Check Duplicate stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "bb500000-0000-4000-a000-000000000005",
+      "name": "Check Duplicate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Build Subscriber Row stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "bb800000-0000-4000-a000-000000000008",
+      "name": "Build Subscriber Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Newsletter_Subscribers",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "bb900000-0000-4000-a000-000000000009",
+      "name": "Add to Subscribers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1340,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "Mxai Sheets Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Build Welcome Email stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "bbB00000-0000-4000-a000-00000000000B",
+      "name": "Build Welcome Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "Welcome to The MAXXAM AI Brief",
+        "emailType": "html",
+        "message": "={{ $json.emailHtml }}",
+        "options": {
+          "senderName": "Reginald Johnson \u2014 MAXXAM AI"
+        }
+      },
+      "id": "bbA00000-0000-4000-a000-00000000000A",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1780,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tiDo2mWl07OMdITb",
+          "name": "MXAI Gmail"
+        }
+      }
+    },
+    {
+      "id": "aa110000-0000-4000-a000-000000000011",
+      "name": "Normalize Sheet Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Normalize Sheet Data stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      }
+    }
+  ],
+  "connections": {
+    "Signup Form": {
+      "main": [
+        [
+          {
+            "node": "Validate & Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Normalize": {
+      "main": [
+        [
+          {
+            "node": "Read Subscribers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Subscribers": {
+      "main": [
+        [
+          {
+            "node": "Normalize Sheet Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Build Subscriber Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Subscriber Row": {
+      "main": [
+        [
+          {
+            "node": "Add to Subscribers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Subscribers": {
+      "main": [
+        [
+          {
+            "node": "Build Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Sheet Data": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": [
+    "maxxam-ai",
+    "newsletter",
+    "subscribers"
+  ],
+  "meta": {
+    "instanceId": "maxxam-ai",
+    "createdWith": "MAXXAM AI n8n-workflow-builder v2",
+    "creationDate": "2026-03-22"
+  }
+}

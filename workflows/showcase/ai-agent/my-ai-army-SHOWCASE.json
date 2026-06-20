@@ -1,0 +1,277 @@
+{
+  "name": "Master AI Business Automation Hub - Fixed",
+  "nodes": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "When Chat Message Received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        200,
+        300
+      ],
+      "webhookId": "business-automation-chat-hub",
+      "parameters": {
+        "mode": "webhook",
+        "public": true,
+        "initialMessages": "\ud83d\ude80 **Welcome to Your AI Business Automation Hub!**\n\nI'm your Master AI Assistant, ready to help scale your AI automation business exponentially. I can route your requests to specialized agents:\n\n\ud83c\udfaf **Sales Agent** - Lead generation, CRM management, proposal automation\n\ud83d\udce2 **Marketing Agent** - Content creation, SEO, social media automation  \n\u2699\ufe0f **Operations Agent** - Workflow optimization, process automation, system integration\n\nWhat can I help you with today?",
+        "options": {
+          "responseMode": "responseNode"
+        }
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "b2c3d4e5-f6g7-8901-bcde-f23456789012",
+      "name": "Master AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "text": "={{ $('When Chat Message Received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are the Master AI Business Automation Agent. Your role is to analyze user requests and provide expert assistance for scaling AI automation businesses.\n\nYou have access to specialized tools:\n- Time tracking for scheduling and deadlines\n- Business calculations for ROI, conversion rates, growth metrics\n- CRM operations for lead management\n- Content generation for marketing materials\n- System integration guidance\n\nAlways respond professionally with actionable advice. Focus on exponential growth strategies and automation opportunities.",
+          "maxIterations": 3
+        }
+      },
+      "typeVersion": 1.7
+    },
+    {
+      "id": "c3d4e5f6-g7h8-9012-cdef-345678901234",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        320,
+        460
+      ],
+      "parameters": {
+        "model": "chatgpt-4o-latest",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 1000
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "{{ $credentials.openAiApi }}",
+          "name": "OpenAI API"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "d4e5f6g7-h8i9-0123-defg-456789012345",
+      "name": "Memory Buffer",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        460,
+        460
+      ],
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "e5f6g7h8-i9j0-1234-efgh-567890123456",
+      "name": "Current Time Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        600,
+        460
+      ],
+      "parameters": {
+        "name": "getCurrentTime",
+        "description": "Get the current date and time",
+        "code": "const now = new Date();\nreturn {\n  currentTime: now.toISOString(),\n  formatted: now.toLocaleString(),\n  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone\n};",
+        "inputSchema": "{\"type\": \"object\", \"properties\": {}, \"additionalProperties\": false}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "f6g7h8i9-j0k1-2345-fghi-678901234567",
+      "name": "Business Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        740,
+        460
+      ],
+      "parameters": {
+        "name": "businessCalculator",
+        "description": "Calculate business metrics like ROI, conversion rates, cost savings",
+        "code": "const { operation, value1, value2 } = $input;\n\nlet result;\nswitch(operation) {\n  case 'roi':\n    result = ((value2 - value1) / value1) * 100;\n    return { result: `${result.toFixed(2)}%`, calculation: 'ROI' };\n  case 'conversion':\n    result = (value1 / value2) * 100;\n    return { result: `${result.toFixed(2)}%`, calculation: 'Conversion Rate' };\n  case 'savings':\n    result = value1 - value2;\n    return { result: result.toFixed(2), calculation: 'Cost Savings' };\n  default:\n    return { error: 'Unknown calculation type' };\n}",
+        "inputSchema": "{\"type\": \"object\", \"properties\": {\"operation\": {\"type\": \"string\", \"enum\": [\"roi\", \"conversion\", \"savings\"]}, \"value1\": {\"type\": \"number\"}, \"value2\": {\"type\": \"number\"}}, \"required\": [\"operation\", \"value1\", \"value2\"]}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "g7h8i9j0-k1l2-3456-ghij-789012345678",
+      "name": "CRM Operations",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        880,
+        460
+      ],
+      "parameters": {
+        "name": "crmOperations",
+        "description": "Perform CRM operations for lead management",
+        "code": "const { action, leadData } = $input;\n\nswitch(action) {\n  case 'addLead':\n    return {\n      success: true,\n      leadId: `LEAD_${Date.now()}`,\n      status: 'Lead added successfully',\n      nextSteps: 'Automated nurture sequence initiated'\n    };\n  case 'getLeads':\n    return {\n      success: true,\n      leads: [\n        { id: 'LEAD_001', name: 'Acme Corp', score: 85, status: 'qualified' },\n        { id: 'LEAD_002', name: 'TechStart Inc', score: 72, status: 'nurturing' }\n      ]\n    };\n  default:\n    return { error: 'Unknown CRM action' };\n}",
+        "inputSchema": "{\"type\": \"object\", \"properties\": {\"action\": {\"type\": \"string\", \"enum\": [\"addLead\", \"getLeads\"]}, \"leadData\": {\"type\": \"object\"}}, \"required\": [\"action\"]}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "h8i9j0k1-l2m3-4567-hijk-890123456789",
+      "name": "Content Generator",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        1020,
+        460
+      ],
+      "parameters": {
+        "name": "contentGenerator",
+        "description": "Generate marketing content for various channels",
+        "code": "const { contentType, topic, audience } = $input;\n\nconst templates = {\n  blog: `# ${topic}\\n\\nA comprehensive guide for ${audience}...\\n\\n## Key Benefits\\n- Benefit 1\\n- Benefit 2\\n- Benefit 3`,\n  social: `\ud83d\ude80 ${topic} Alert!\\n\\nPerfect for ${audience}\\n\\n#AI #Automation #Growth`,\n  email: `Subject: Transform Your Business with ${topic}\\n\\nHi there!\\n\\nReady to scale your ${audience} operations?`\n};\n\nreturn {\n  success: true,\n  content: templates[contentType] || 'Content template not found',\n  contentType,\n  optimizedFor: audience\n};",
+        "inputSchema": "{\"type\": \"object\", \"properties\": {\"contentType\": {\"type\": \"string\", \"enum\": [\"blog\", \"social\", \"email\"]}, \"topic\": {\"type\": \"string\"}, \"audience\": {\"type\": \"string\"}}, \"required\": [\"contentType\", \"topic\", \"audience\"]}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "i9j0k1l2-m3n4-5678-ijkl-901234567890",
+      "name": "System Integration Guide",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        1160,
+        460
+      ],
+      "parameters": {
+        "name": "systemIntegration",
+        "description": "Provide system integration guidance",
+        "code": "const { integrationType, sourceSystem, targetSystem } = $input;\n\nconst integrations = {\n  'crm-marketing': {\n    method: 'API Webhook',\n    complexity: 'Medium',\n    setup_time: '2-4 hours',\n    benefits: ['Real-time sync', 'Lead scoring', 'Campaign tracking']\n  },\n  'database-analytics': {\n    method: 'Direct Database Connection',\n    complexity: 'Low', \n    setup_time: '1-2 hours',\n    benefits: ['Real-time reporting', 'Automated dashboards']\n  }\n};\n\nconst integration = integrations[integrationType] || {\n  method: 'Custom API Integration',\n  complexity: 'Variable',\n  setup_time: 'Depends on complexity'\n};\n\nreturn {\n  success: true,\n  integration,\n  sourceSystem,\n  targetSystem,\n  recommendation: `Implement ${integration.method} for optimal results`\n};",
+        "inputSchema": "{\"type\": \"object\", \"properties\": {\"integrationType\": {\"type\": \"string\"}, \"sourceSystem\": {\"type\": \"string\"}, \"targetSystem\": {\"type\": \"string\"}}, \"required\": [\"integrationType\"]}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "j0k1l2m3-n4o5-6789-jklm-012345678901",
+      "name": "Sticky Note - Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        120,
+        60
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 960,
+        "height": 180,
+        "content": "\ud83d\ude80 **MASTER AI BUSINESS AUTOMATION HUB**\n\nThis workflow creates an intelligent AI assistant for your automation business with specialized tools:\n- **Time Tool**: Current date/time for scheduling\n- **Business Calculator**: ROI, conversion rates, cost savings\n- **CRM Operations**: Lead management and tracking\n- **Content Generator**: Marketing content creation\n- **System Integration**: Technical implementation guidance\n\n**Setup**: Connect your OpenAI API credentials and test the chat interface."
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "When Chat Message Received": {
+      "main": [
+        [
+          {
+            "node": "Master AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Master AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory Buffer": {
+      "ai_memory": [
+        [
+          {
+            "node": "Master AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Current Time Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Master AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Master AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM Operations": {
+      "ai_tool": [
+        [
+          {
+            "node": "Master AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Generator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Master AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "System Integration Guide": {
+      "ai_tool": [
+        [
+          {
+            "node": "Master AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    "AI",
+    "Business Automation",
+    "Sales",
+    "Marketing",
+    "Operations"
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-21T00:00:00.000Z",
+  "versionId": "1"
+}

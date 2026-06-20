@@ -1,0 +1,429 @@
+{
+  "name": "Healthcare Appointment Automation — SHOWCASE Architecture",
+  "nodes": [
+    {
+      "id": "sticky-overview",
+      "name": "System Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-300, -200],
+      "parameters": {
+        "color": 4,
+        "width": 560,
+        "height": 340,
+        "content": "## Healthcare Appointment Automation — SHOWCASE\n\n**MAXXAM AI — Architecture Reference**\n\nThis is a sanitized architecture showcase. All credentials are placeholders.\nThe full production system includes 5 additional chained workflows\n(AI voice qualification, ROI reporting, waitlist management, re-engagement sequences).\n\n**What this workflow handles:**\n1. Receives booking events from Cal.com via webhook\n2. Routes by event type: New Booking / Cancellation / No-Show\n3. Triggers appropriate communication sequence\n4. Logs all activity to Google Sheets\n\n**Stack:** Cal.com → n8n → Gmail + Twilio → Google Sheets\n\n> Book a discovery call: https://tinyurl.com/maxxam-call"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "trigger-webhook",
+      "name": "Cal.com Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [0, 300],
+      "parameters": {
+        "path": "{{ WEBHOOK_PATH }}",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "healthcare-booking-webhook",
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-trigger",
+      "name": "Trigger Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-60, 160],
+      "parameters": {
+        "color": 5,
+        "width": 280,
+        "height": 120,
+        "content": "### Step 1: Receive Booking Event\n\nCal.com sends a POST to this webhook on:\n- New booking\n- Cancellation\n- No-show (via manual trigger or Cal.com event)"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "set-config",
+      "name": "System Config",
+      "type": "n8n-nodes-base.set",
+      "position": [260, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-01",
+              "name": "practiceEmail",
+              "type": "string",
+              "value": "{{ YOUR_PRACTICE_EMAIL }}"
+            },
+            {
+              "id": "cfg-02",
+              "name": "twilioFromNumber",
+              "type": "string",
+              "value": "{{ YOUR_TWILIO_NUMBER }}"
+            },
+            {
+              "id": "cfg-03",
+              "name": "bookingUrl",
+              "type": "string",
+              "value": "{{ YOUR_CAL_COM_BOOKING_URL }}"
+            },
+            {
+              "id": "cfg-04",
+              "name": "activitySheetId",
+              "type": "string",
+              "value": "{{ YOUR_GOOGLE_SHEET_ID }}"
+            },
+            {
+              "id": "cfg-05",
+              "name": "staffAlertEmail",
+              "type": "string",
+              "value": "{{ YOUR_STAFF_ALERT_EMAIL }}"
+            },
+            {
+              "id": "cfg-06",
+              "name": "sessionValue",
+              "type": "number",
+              "value": 150
+            }
+          ]
+        },
+        "options": {}
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "sticky-config",
+      "name": "Config Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [200, 160],
+      "parameters": {
+        "color": 5,
+        "width": 280,
+        "height": 120,
+        "content": "### Step 2: System Config\n\nAll placeholders — set once, used throughout.\nChange values here without touching downstream nodes."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "switch-event-type",
+      "name": "Route by Event Type",
+      "type": "n8n-nodes-base.switch",
+      "position": [520, 300],
+      "parameters": {
+        "mode": "expression",
+        "output": "single",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "or",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_CREATED",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "outputKey": "new_booking"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "or",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "BOOKING_CANCELLED",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "outputKey": "cancellation"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "or",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.triggerEvent }}",
+                    "rightValue": "NO_SHOW",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "outputKey": "no_show"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.2
+    },
+    {
+      "id": "sticky-route",
+      "name": "Route Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [460, 140],
+      "parameters": {
+        "color": 5,
+        "width": 280,
+        "height": 140,
+        "content": "### Step 3: Route by Event Type\n\nCal.com event type → 3 branches:\n- **new_booking** → confirmation + reminder sequence\n- **cancellation** → confirm cancel + notify waitlist\n- **no_show** → staff alert + re-engagement SMS\n\nFalls through to logger on all paths."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "gmail-confirmation",
+      "name": "Send Confirmation Email",
+      "type": "n8n-nodes-base.gmail",
+      "position": [800, 100],
+      "parameters": {
+        "operation": "send",
+        "sendTo": "={{ $json.body.attendees[0].email }}",
+        "subject": "Appointment Confirmed — {{ $json.body.title }}",
+        "emailType": "html",
+        "message": "<p>Hi {{ $json.body.attendees[0].name }},</p><p>Your appointment is confirmed for {{ $json.body.startTime }}.</p><p>You'll receive a reminder 24 hours before. To reschedule: {{ $('System Config').item.json.bookingUrl }}</p>",
+        "options": {
+          "replyTo": "={{ $('System Config').item.json.practiceEmail }}"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "sticky-new-booking",
+      "name": "New Booking Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [740, -60],
+      "parameters": {
+        "color": 3,
+        "width": 500,
+        "height": 140,
+        "content": "### Branch A: New Booking\n\n1. Confirmation email (immediate)\n2. [In production: Wait 72h → Email reminder]\n3. [In production: Wait 24h → SMS reminder]\n4. [In production: Wait 2h → Final SMS]\n5. [Conditional: if confirmed → cancel remaining reminders]\n\nAll Wait nodes and reminder branches are active in the full production system."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "twilio-24h-sms",
+      "name": "SMS Reminder (T-24h)",
+      "type": "n8n-nodes-base.twilio",
+      "position": [1060, 100],
+      "parameters": {
+        "operation": "send",
+        "from": "={{ $('System Config').item.json.twilioFromNumber }}",
+        "to": "={{ $json.body.attendees[0].phone }}",
+        "message": "Reminder: Your appointment is tomorrow at {{ $json.body.startTime }}. Reply CONFIRM to confirm or CANCEL to reschedule: {{ $('System Config').item.json.bookingUrl }}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "twilio-cancel-confirm",
+      "name": "SMS Cancel Confirmation",
+      "type": "n8n-nodes-base.twilio",
+      "position": [800, 380],
+      "parameters": {
+        "operation": "send",
+        "from": "={{ $('System Config').item.json.twilioFromNumber }}",
+        "to": "={{ $json.body.attendees[0].phone }}",
+        "message": "Your appointment has been cancelled. To rebook: {{ $('System Config').item.json.bookingUrl }}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "http-notify-waitlist",
+      "name": "Check & Notify Waitlist",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1060, 380],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://your-n8n-instance/webhook/waitlist-notify?slotTime=' + $json.body.startTime }}",
+        "options": {}
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "sticky-cancel",
+      "name": "Cancellation Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [740, 240],
+      "parameters": {
+        "color": 7,
+        "width": 480,
+        "height": 120,
+        "content": "### Branch B: Cancellation\n\n1. SMS confirming cancellation to client\n2. Trigger waitlist webhook — first waitlist respondent gets the slot\n\n[In production: Cancellation opens to waitlist within minutes via separate workflow]"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "gmail-staff-alert",
+      "name": "No-Show Staff Alert",
+      "type": "n8n-nodes-base.gmail",
+      "position": [800, 620],
+      "parameters": {
+        "operation": "send",
+        "sendTo": "={{ $('System Config').item.json.staffAlertEmail }}",
+        "subject": "No-Show: {{ $json.body.attendees[0].name }} — {{ $json.body.startTime }}",
+        "emailType": "html",
+        "message": "<p><strong>No-show recorded.</strong></p><p>Client: {{ $json.body.attendees[0].name }}<br>Time: {{ $json.body.startTime }}<br>Phone: {{ $json.body.attendees[0].phone }}</p><p>Re-engagement SMS sent automatically.</p>",
+        "options": {}
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "twilio-reengagement",
+      "name": "Re-Engagement SMS",
+      "type": "n8n-nodes-base.twilio",
+      "position": [1060, 620],
+      "parameters": {
+        "operation": "send",
+        "from": "={{ $('System Config').item.json.twilioFromNumber }}",
+        "to": "={{ $json.body.attendees[0].phone }}",
+        "message": "Hi {{ $json.body.attendees[0].name }}, we missed you today. Would you like to reschedule? {{ $('System Config').item.json.bookingUrl }}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-noshow",
+      "name": "No-Show Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [740, 500],
+      "parameters": {
+        "color": 2,
+        "width": 480,
+        "height": 100,
+        "content": "### Branch C: No-Show\n\n1. Email alert to staff (with client contact info)\n2. Re-engagement SMS to client with rebook link\n\n[In production: No-show triggers a multi-day re-engagement sequence]"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "google-sheets-log",
+      "name": "Log to Activity Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [1320, 380],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('System Config').item.json.activitySheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Activity Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "eventType": "={{ $json.body.triggerEvent }}",
+            "clientName": "={{ $json.body.attendees[0].name }}",
+            "clientEmail": "={{ $json.body.attendees[0].email }}",
+            "appointmentTime": "={{ $json.body.startTime }}",
+            "status": "processed"
+          }
+        },
+        "options": {}
+      },
+      "typeVersion": 4.5
+    },
+    {
+      "id": "sticky-logger",
+      "name": "Logger Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [1260, 240],
+      "parameters": {
+        "color": 5,
+        "width": 300,
+        "height": 120,
+        "content": "### All Branches: Activity Logger\n\nEvery event — booking, cancel, no-show — logs to Google Sheets.\nFeeds the weekly ROI report (separate workflow).\nSession value tracked for revenue calculations."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "respond-webhook",
+      "name": "Respond to Cal.com",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [1580, 380],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\": \"processed\"}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "typeVersion": 1.1
+    }
+  ],
+  "connections": {
+    "Cal.com Webhook": {
+      "main": [
+        [{ "node": "System Config", "type": "main", "index": 0 }]
+      ]
+    },
+    "System Config": {
+      "main": [
+        [{ "node": "Route by Event Type", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route by Event Type": {
+      "main": [
+        [{ "node": "Send Confirmation Email", "type": "main", "index": 0 }],
+        [{ "node": "SMS Cancel Confirmation", "type": "main", "index": 0 }],
+        [{ "node": "No-Show Staff Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Confirmation Email": {
+      "main": [
+        [{ "node": "SMS Reminder (T-24h)", "type": "main", "index": 0 }]
+      ]
+    },
+    "SMS Reminder (T-24h)": {
+      "main": [
+        [{ "node": "Log to Activity Sheet", "type": "main", "index": 0 }]
+      ]
+    },
+    "SMS Cancel Confirmation": {
+      "main": [
+        [{ "node": "Check & Notify Waitlist", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check & Notify Waitlist": {
+      "main": [
+        [{ "node": "Log to Activity Sheet", "type": "main", "index": 0 }]
+      ]
+    },
+    "No-Show Staff Alert": {
+      "main": [
+        [{ "node": "Re-Engagement SMS", "type": "main", "index": 0 }]
+      ]
+    },
+    "Re-Engagement SMS": {
+      "main": [
+        [{ "node": "Log to Activity Sheet", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log to Activity Sheet": {
+      "main": [
+        [{ "node": "Respond to Cal.com", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "maxxam-ai-showcase"
+  },
+  "pinData": {},
+  "versionId": "showcase-v1",
+  "triggerCount": 1,
+  "tags": [
+    { "createdAt": "2026-06-20", "updatedAt": "2026-06-20", "id": "healthcare", "name": "healthcare" },
+    { "createdAt": "2026-06-20", "updatedAt": "2026-06-20", "id": "showcase", "name": "showcase" },
+    { "createdAt": "2026-06-20", "updatedAt": "2026-06-20", "id": "maxxam-ai", "name": "maxxam-ai" }
+  ]
+}

@@ -28,12 +28,14 @@ This portfolio documents real client systems built with the WAT Framework (Workf
 
 Ready-to-import n8n workflows with setup documentation.
 
-| Workflow | Category | Description |
-|----------|----------|-------------|
-| [Smart Waitlist System](workflows/healthcare/WF-1.1-Smart-Waitlist-System.json) | Healthcare | Automated waitlist management with Cal.com + Twilio + Google Sheets |
-| [AI Readiness Quiz Funnel](workflows/marketing/MAXXAM-AI-Readiness-Quiz-Funnel.json) | Marketing / Lead Scoring | Quiz submission → lead scoring → tiered email sequences |
+**43 workflows built across client engagements and internal operations.** Two tiers published here:
 
-See [workflows/README.md](workflows/README.md) for setup instructions and configuration guides.
+| Tier | Count | What's Inside |
+|------|-------|--------------|
+| [`free/`](workflows/free/) | 5 | Import-ready templates — configure credentials and run |
+| [`showcase/`](workflows/showcase/) | 14 | Full architecture with Code node logic redacted — study the flow, not the implementation |
+
+See [workflows/README.md](workflows/README.md) for the full library with descriptions and setup guides.
 
 ---
 

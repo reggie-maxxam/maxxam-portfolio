@@ -1,0 +1,359 @@
+{
+  "name": "MAXXAM AI \u2014 Newsletter Hub (Publish + View)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## MAXXAM AI \u2014 Newsletter Hub\n\nHandles two functions:\n\n### A) PUBLISH (POST)\n`POST https://n8n.srv918553.hstgr.cloud/webhook/maxxam-newsletter-publish`\n\nCalled by `python tools/publish_newsletter.py --issue N`\n\nWhat it does:\n1. Stores the full HTML in workflow static data (by issue number)\n2. Responds immediately with 202\n3. Reads active subscribers from Google Sheets\n4. Sends a branded teaser email to each subscriber with a 'Read Full Issue' link\n5. Updates Sent Count + Last Sent for each subscriber\n\n### B) VIEW (GET)\n`GET https://n8n.srv918553.hstgr.cloud/webhook/maxxam-newsletter-view?issue=1`\n\nServes the stored full HTML newsletter as a web page.\n\n**Credential:** MXAI - Google (`dQbDlkXclK7YGOPI`)\n**Gmail Credential:** `qLQyX1xkroegloas`\n**Activate before running publish_newsletter.py**",
+        "width": 540,
+        "height": 420,
+        "color": 5
+      },
+      "id": "cc100000-0000-4000-a000-000000000001",
+      "name": "Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "maxxam-newsletter-publish",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "cc200000-0000-4000-a000-000000000002",
+      "name": "Publish Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        200
+      ],
+      "webhookId": "maxxam-newsletter-publish"
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "maxxam-newsletter-view",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "cc300000-0000-4000-a000-000000000003",
+      "name": "View Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        560
+      ],
+      "webhookId": "maxxam-newsletter-view"
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Store Newsletter HTML stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "cc400000-0000-4000-a000-000000000004",
+      "name": "Store Newsletter HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'accepted', message: 'Newsletter stored. Sending to subscribers...', issue: $json.issue }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "cc500000-0000-4000-a000-000000000005",
+      "name": "Respond 202",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Newsletter_Subscribers",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "cc600000-0000-4000-a000-000000000006",
+      "name": "Read Active Subscribers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        900,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "Mxai Sheets Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Prepare Subscriber Items stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "cc700000-0000-4000-a000-000000000007",
+      "name": "Prepare Subscriber Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Build Teaser Email stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "cc800000-0000-4000-a000-000000000008",
+      "name": "Build Teaser Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.emailHtml }}",
+        "options": {
+          "senderName": "Reginald Johnson \u2014 MAXXAM AI"
+        }
+      },
+      "id": "cc900000-0000-4000-a000-000000000009",
+      "name": "Send Teaser Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        200
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tiDo2mWl07OMdITb",
+          "name": "MXAI Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Newsletter_Subscribers",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.rowNumber }}",
+            "Sent Count": "={{ $json.sentCount + 1 }}",
+            "Last Sent": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "ccA00000-0000-4000-a000-00000000000A",
+      "name": "Update Sent Count",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1780,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "Mxai Sheets Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Load Newsletter HTML stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "ccB00000-0000-4000-a000-00000000000B",
+      "name": "Load Newsletter HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "ccC00000-0000-4000-a000-00000000000C",
+      "name": "Serve Newsletter",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Publish Webhook": {
+      "main": [
+        [
+          {
+            "node": "Store Newsletter HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Newsletter HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond 202",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 202": {
+      "main": [
+        [
+          {
+            "node": "Read Active Subscribers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Active Subscribers": {
+      "main": [
+        [
+          {
+            "node": "Prepare Subscriber Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Subscriber Items": {
+      "main": [
+        [
+          {
+            "node": "Build Teaser Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Teaser Email": {
+      "main": [
+        [
+          {
+            "node": "Send Teaser Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Teaser Email": {
+      "main": [
+        [
+          {
+            "node": "Update Sent Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "View Webhook": {
+      "main": [
+        [
+          {
+            "node": "Load Newsletter HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Newsletter HTML": {
+      "main": [
+        [
+          {
+            "node": "Serve Newsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": [
+    "maxxam-ai",
+    "newsletter"
+  ],
+  "meta": {
+    "instanceId": "maxxam-ai",
+    "createdWith": "MAXXAM AI n8n-workflow-builder v2",
+    "creationDate": "2026-03-22"
+  }
+}

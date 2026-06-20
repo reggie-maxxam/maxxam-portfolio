@@ -1,0 +1,154 @@
+{
+  "name": "MAXXAM AI — Sheet Writer (Content Calendar)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## MAXXAM AI — Sheet Writer\n\n**Purpose:** Receive pre-generated content from Claude and append it to the Content_Calendar Google Sheet.\n\n**No AI nodes. No Anthropic credential needed.**\n\n**ONE-TIME SETUP:**\n1. Open **Write to Content Calendar** node\n2. Replace `1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE` with your actual Sheet ID\n3. Activate this workflow\n4. Copy the webhook URL from the Sheet Writer Webhook node\n\n**How it works:**\n- Claude generates the LinkedIn post via the /maxxam-linkedin-content skill\n- You approve the post in Claude\n- Claude POSTs the JSON row to this webhook\n- This workflow validates the data and appends it to the sheet\n\n**Test payload:**\n```json\n{\n  \"id\": \"20260321-001\",\n  \"pillar\": \"3\",\n  \"pillar_name\": \"Healthcare Automation\",\n  \"platform\": \"LinkedIn\",\n  \"content_type\": \"text\",\n  \"topic\": \"No-show recovery for therapy practices\",\n  \"hook\": \"Test hook line\",\n  \"body\": \"Test body content\",\n  \"cta\": \"Book a call\",\n  \"scheduled_date\": \"2026-03-24\",\n  \"scheduled_time\": \"08:00\",\n  \"status\": \"approved\"\n}\n```",
+        "width": 540,
+        "height": 420,
+        "color": 5
+      },
+      "id": "aa111111-1111-4111-a111-111111111101",
+      "name": "Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-20, -340]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "maxxam-sheet-writer",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "aa222222-2222-4222-a222-222222222202",
+      "name": "Sheet Writer Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate required fields and build a clean Content_Calendar row\ntry {\n  const body = $input.first().json.body || $input.first().json;\n\n  if (!body.topic) throw new Error('Missing required field: topic');\n  if (!body.platform) throw new Error('Missing required field: platform');\n\n  const today = new Date().toISOString().split('T')[0];\n  const id = body.id || today.replace(/-/g, '') + '-' + Math.floor(Math.random() * 900 + 100);\n\n  const pillarNames = {\n    '1': 'AI Automation Systems & Processes',\n    '2': 'Success Stories & Case Studies',\n    '3': 'Healthcare Automation',\n    '4': 'AI Myths & Misconceptions',\n    '5': 'Industry Insights',\n    '6': 'Q&A & Concerns',\n    '7': 'Behind-the-Scenes & Personal'\n  };\n\n  const pillar = String(body.pillar || '1');\n\n  return [{\n    json: {\n      id,\n      pillar,\n      pillar_name: body.pillar_name || pillarNames[pillar] || 'AI Automation Systems & Processes',\n      platform: body.platform || 'LinkedIn',\n      content_type: body.content_type || 'text',\n      topic: body.topic,\n      hook: body.hook || '',\n      body: body.body || '',\n      cta: body.cta || 'Book a discovery call: https://cal.com/reginald-johnson-fphjbi/discovery',\n      image_url: body.image_url || '',\n      scheduled_date: body.scheduled_date || today,\n      scheduled_time: body.scheduled_time || '08:00',\n      status: body.status || 'draft',\n      posted_at: '',\n      post_url: '',\n      impressions: '',\n      engagement: '',\n      notes: body.notes || 'Added via Sheet Writer webhook'\n    }\n  }];\n} catch (error) {\n  console.error('Validate & Build Row:', error.message);\n  throw new Error('Validation failed: ' + error.message);\n}"
+      },
+      "id": "aa333333-3333-4333-a333-333333333303",
+      "name": "Validate & Build Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Validates required fields and builds a clean Content_Calendar row. No AI required."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Content_Calendar",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "pillar": "={{ $json.pillar }}",
+            "pillar_name": "={{ $json.pillar_name }}",
+            "platform": "={{ $json.platform }}",
+            "content_type": "={{ $json.content_type }}",
+            "topic": "={{ $json.topic }}",
+            "hook": "={{ $json.hook }}",
+            "body": "={{ $json.body }}",
+            "cta": "={{ $json.cta }}",
+            "image_url": "={{ $json.image_url }}",
+            "scheduled_date": "={{ $json.scheduled_date }}",
+            "scheduled_time": "={{ $json.scheduled_time }}",
+            "status": "={{ $json.status }}",
+            "posted_at": "",
+            "post_url": "",
+            "impressions": "",
+            "engagement": "",
+            "notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": "id", "displayName": "id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "pillar", "displayName": "pillar", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "pillar_name", "displayName": "pillar_name", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "platform", "displayName": "platform", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "content_type", "displayName": "content_type", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "topic", "displayName": "topic", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "hook", "displayName": "hook", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "body", "displayName": "body", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "cta", "displayName": "cta", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "image_url", "displayName": "image_url", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "scheduled_date", "displayName": "scheduled_date", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "scheduled_time", "displayName": "scheduled_time", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "posted_at", "displayName": "posted_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "post_url", "displayName": "post_url", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "impressions", "displayName": "impressions", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "engagement", "displayName": "engagement", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "notes", "displayName": "notes", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "aa444444-4444-4444-a444-444444444404",
+      "name": "Write to Content Calendar",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [680, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dQbDlkXclK7YGOPI",
+          "name": "MXAI - Google"
+        }
+      },
+      "notes": "SETUP REQUIRED: Replace 1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE with your actual Sheet ID."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, id: $('Validate & Build Row').first().json.id, message: 'Row added to Content_Calendar. Review in Google Sheet.' }) }}"
+      },
+      "id": "aa555555-5555-4555-a555-555555555505",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Sheet Writer Webhook": {
+      "main": [
+        [{ "node": "Validate & Build Row", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validate & Build Row": {
+      "main": [
+        [{ "node": "Write to Content Calendar", "type": "main", "index": 0 }]
+      ]
+    },
+    "Write to Content Calendar": {
+      "main": [
+        [{ "node": "Respond Success", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": ["maxxam-ai", "social-media", "linkedin", "content"],
+  "meta": {
+    "instanceId": "maxxam-ai",
+    "createdWith": "MAXXAM AI n8n-workflow-builder v2",
+    "creationDate": "2026-03-21"
+  }
+}

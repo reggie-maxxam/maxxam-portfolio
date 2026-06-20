@@ -1,0 +1,401 @@
+{
+  "name": "MAXXAM Prospect Outreach \u2014 5-Email Sequence",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## MAXXAM Prospect Outreach\n\n**What this does:**\nRuns daily at 8am. Reads the MAXXAM Prospect Pipeline sheet, finds rows that need the next email in the 5-email sequence, sends personalized Gmail, and updates the sheet.\n\n**Email schedule:**\n- Email 1: Row added to sheet with email address\n- Email 2: 4 days after Email 1 (if no reply)\n- Email 3: 4 days after Email 2 (if no reply)\n- Email 4: 4 days after Email 3 (if no reply)\n- Email 5: 4 days after Email 4 (if no reply) \u2014 final, marks sequence complete\n\n**Sheet columns required:**\nfirst_name, last_name, practice_name, email, status,\nemail_1_sent, email_2_sent, email_3_sent, email_4_sent, email_5_sent, replied\n\n**Sheet ID:** 11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY\n**Gmail credential:** reggie@maxxam.ai\n**Sheets credential:** Google Sheets (Q144RZRFCkewBJK4)",
+        "height": 420,
+        "width": 380,
+        "color": 5
+      },
+      "id": "sticky-overview",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -440,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24,
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "trigger-daily",
+      "name": "Daily 8am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "0",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "sheets-read",
+      "name": "Get Prospect Pipeline",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        220,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Classify & Build Email Content stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "code-classify",
+      "name": "Classify & Build Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "has-recipient",
+              "leftValue": "={{ $json.to }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-action",
+      "name": "Has Email to Send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {
+          "replyTo": "reggie@maxxam.ai"
+        }
+      },
+      "id": "gmail-send",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        200
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "962812121429-okk8u6kq0crn7qhij494fr31cm1t1cqu.apps.googleusercontent.com",
+          "name": "Gmail \u2014 reggie@maxxam.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Build Sheet Update stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "code-build-update",
+      "name": "Build Sheet Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "sheets-update",
+      "name": "Update Sent Date",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1320,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "sheets-append-prospect",
+      "name": "Add New Prospect",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        440,
+        560
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "Google Sheets"
+        }
+      },
+      "notes": "Separate webhook trigger \u2014 called by prospect_discovery.py. Accepts POST with prospect JSON."
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "maxxam-prospect-writer",
+        "options": {}
+      },
+      "id": "webhook-prospect-writer",
+      "name": "Prospect Writer Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        560
+      ],
+      "webhookId": "maxxam-prospect-writer"
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Build Cold Call Update stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "code-cold-call-update",
+      "name": "Build Cold Call Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "matchingColumns": [
+            "phone"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "sheets-flag-cold-call",
+      "name": "Flag Cold Call",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1100,
+        440
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "Google Sheets"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 8am": {
+      "main": [
+        [
+          {
+            "node": "Get Prospect Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Prospect Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Classify & Build Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify & Build Email Content": {
+      "main": [
+        [
+          {
+            "node": "Has Email to Send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Email to Send?": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Cold Call Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Cold Call Update": {
+      "main": [
+        [
+          {
+            "node": "Flag Cold Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Build Sheet Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Sheet Update": {
+      "main": [
+        [
+          {
+            "node": "Update Sent Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prospect Writer Webhook": {
+      "main": [
+        [
+          {
+            "node": "Add New Prospect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    "maxxam",
+    "outreach",
+    "automation"
+  ],
+  "triggerCount": 2,
+  "updatedAt": "2026-05-07T12:00:00.000Z",
+  "versionId": "1"
+}

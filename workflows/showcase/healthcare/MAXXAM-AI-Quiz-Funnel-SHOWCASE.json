@@ -1,0 +1,971 @@
+{
+  "name": "MAXXAM AI Readiness Scorecard - Quiz Funnel",
+  "nodes": [
+    {
+      "id": "webhook-trigger-001",
+      "name": "Quiz Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "ai-readiness-quiz-webhook",
+      "parameters": {
+        "path": "ai-readiness-quiz",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-overview-001",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -200,
+        0
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 450,
+        "height": 280,
+        "content": "## \ud83c\udfaf MAXXAM AI Readiness Scorecard\n### Quiz Funnel \u2014 v2 (custom quiz.html)\n\n**Payload from quiz.html:**\n- firstName, lastName, email, phone\n- overall (0\u2013100%), tier (starter/building/advanced)\n- weakestCategory, categoryScores {visibility,trust,revenue,scale,operations,mindset}\n- industry, revenue, timeline, source\n\n**Flow:**\n1. Receive quiz submission\n2. Parse & normalize payload\n3. Enrich with routing tags\n4. Route \u2192 Hot / Warm / Cool / Cold\n5. Log to Google Sheets\n6. Generate PDF\n7. Email results + booking link\n8. Alert Reggie for hot leads"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "parse-quiz-data-001",
+      "name": "Parse Quiz Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Normalize and validate the quiz.html POST payload\n// Inputs:  Raw webhook body: email, firstName, lastName, phone, overall(%), tier, categoryScores{}, weakestCategory, industry, revenue, timeline, source, completedAt\n// Outputs: Normalized lead object with standardized field names and defaults\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "calculate-score-001",
+      "name": "Enrich Lead Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Score and tag the lead by readiness tier for downstream routing\n// Inputs:  Normalized lead: overall(%), tier, categoryScores, weakestCategory, industry, revenue, timeline\n// Outputs: categoryTag(hot/warm/cool/cold), emailSequence, primaryCTA, allTags, industryTag, revenueTag, timelineTag\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-score-001",
+      "name": "Enrich Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        450,
+        80
+      ],
+      "parameters": {
+        "color": 5,
+        "width": 350,
+        "height": 200,
+        "content": "### \ud83d\udcca Step 3: Enrich Lead Data\n\n**Maps quiz.html payload to routing fields:**\n- overall % \u2192 tier \u2192 categoryTag\n- industry / revenue / timeline \u2192 tags\n- weakestCategory \u2192 label for PDF\n\n**Tier \u2192 Lead Temp:**\n- advanced (71-100%) \u2192 hot-lead\n- building (46-70%) \u2192 warm-lead\n- starter 26-45% \u2192 cool-lead\n- starter 0-25% \u2192 cold-lead"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "route-by-category-001",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        750,
+        300
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "outputKey": "Hot Lead (Advanced)",
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.categoryTag }}",
+                    "rightValue": "hot-lead"
+                  }
+                ]
+              },
+              "renameOutput": true
+            },
+            {
+              "outputKey": "Warm Lead (Builder)",
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "warm-condition",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.categoryTag }}",
+                    "rightValue": "warm-lead"
+                  }
+                ]
+              },
+              "renameOutput": true
+            },
+            {
+              "outputKey": "Cool Lead (Starter+)",
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "cool-condition",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.categoryTag }}",
+                    "rightValue": "cool-lead"
+                  }
+                ]
+              },
+              "renameOutput": true
+            },
+            {
+              "outputKey": "Cold Lead (Starter)",
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "cold-condition",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.categoryTag }}",
+                    "rightValue": "cold-lead"
+                  }
+                ]
+              },
+              "renameOutput": true
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "typeVersion": 3.2
+    },
+    {
+      "id": "sticky-route-001",
+      "name": "Routing Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        700,
+        180
+      ],
+      "parameters": {
+        "color": 3,
+        "width": 300,
+        "height": 100,
+        "content": "### \ud83d\udd00 Step 4: Route by Score\nDirects leads to appropriate paths based on tier."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "merge-all-leads-001",
+      "name": "Merge All Leads",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1000,
+        300
+      ],
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "log-to-sheets-001",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1250,
+        300
+      ],
+      "parameters": {
+        "columns": {
+          "value": {
+            "Timestamp": "={{ $json.timestamp }}",
+            "Submission ID": "={{ $json.submissionId }}",
+            "Email": "={{ $json.email }}",
+            "First Name": "={{ $json.firstName }}",
+            "Last Name": "={{ $json.lastName }}",
+            "Phone": "={{ $json.phone }}",
+            "Overall Score %": "={{ $json.overall }}",
+            "Tier": "={{ $json.tier }}",
+            "Category": "={{ $json.category }}",
+            "Category Tag": "={{ $json.categoryTag }}",
+            "Weakest Category": "={{ $json.weakestCategoryLabel }}",
+            "Visibility %": "={{ $json.categoryScores.visibility }}",
+            "Trust %": "={{ $json.categoryScores.trust }}",
+            "Revenue %": "={{ $json.categoryScores.revenue }}",
+            "Scale %": "={{ $json.categoryScores.scale }}",
+            "Operations %": "={{ $json.categoryScores.operations }}",
+            "Mindset %": "={{ $json.categoryScores.mindset }}",
+            "Industry": "={{ $json.industry }}",
+            "Revenue Range": "={{ $json.revenue }}",
+            "Timeline": "={{ $json.timeline }}",
+            "Source": "={{ $json.source }}",
+            "Industry Tag": "={{ $json.industryTag }}",
+            "Revenue Tag": "={{ $json.revenueTag }}",
+            "Timeline Tag": "={{ $json.timelineTag }}",
+            "All Tags": "={{ $json.allTags }}",
+            "Email Sequence": "={{ $json.emailSequence }}"
+          },
+          "schema": [
+            {
+              "id": "Timestamp",
+              "type": "string",
+              "displayName": "Timestamp"
+            },
+            {
+              "id": "Submission ID",
+              "type": "string",
+              "displayName": "Submission ID"
+            },
+            {
+              "id": "Email",
+              "type": "string",
+              "displayName": "Email"
+            },
+            {
+              "id": "First Name",
+              "type": "string",
+              "displayName": "First Name"
+            },
+            {
+              "id": "Last Name",
+              "type": "string",
+              "displayName": "Last Name"
+            },
+            {
+              "id": "Phone",
+              "type": "string",
+              "displayName": "Phone"
+            },
+            {
+              "id": "Overall Score %",
+              "type": "string",
+              "displayName": "Overall Score %"
+            },
+            {
+              "id": "Tier",
+              "type": "string",
+              "displayName": "Tier"
+            },
+            {
+              "id": "Category",
+              "type": "string",
+              "displayName": "Category"
+            },
+            {
+              "id": "Category Tag",
+              "type": "string",
+              "displayName": "Category Tag"
+            },
+            {
+              "id": "Weakest Category",
+              "type": "string",
+              "displayName": "Weakest Category"
+            },
+            {
+              "id": "Visibility %",
+              "type": "string",
+              "displayName": "Visibility %"
+            },
+            {
+              "id": "Trust %",
+              "type": "string",
+              "displayName": "Trust %"
+            },
+            {
+              "id": "Revenue %",
+              "type": "string",
+              "displayName": "Revenue %"
+            },
+            {
+              "id": "Scale %",
+              "type": "string",
+              "displayName": "Scale %"
+            },
+            {
+              "id": "Operations %",
+              "type": "string",
+              "displayName": "Operations %"
+            },
+            {
+              "id": "Mindset %",
+              "type": "string",
+              "displayName": "Mindset %"
+            },
+            {
+              "id": "Industry",
+              "type": "string",
+              "displayName": "Industry"
+            },
+            {
+              "id": "Revenue Range",
+              "type": "string",
+              "displayName": "Revenue Range"
+            },
+            {
+              "id": "Timeline",
+              "type": "string",
+              "displayName": "Timeline"
+            },
+            {
+              "id": "Source",
+              "type": "string",
+              "displayName": "Source"
+            },
+            {
+              "id": "Industry Tag",
+              "type": "string",
+              "displayName": "Industry Tag"
+            },
+            {
+              "id": "Revenue Tag",
+              "type": "string",
+              "displayName": "Revenue Tag"
+            },
+            {
+              "id": "Timeline Tag",
+              "type": "string",
+              "displayName": "Timeline Tag"
+            },
+            {
+              "id": "All Tags",
+              "type": "string",
+              "displayName": "All Tags"
+            },
+            {
+              "id": "Email Sequence",
+              "type": "string",
+              "displayName": "Email Sequence"
+            }
+          ],
+          "mappingMode": "defineBelow"
+        },
+        "options": {
+          "useAppend": true
+        },
+        "operation": "append",
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Responses"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1sRHihRgm_Uqezu27DY5Xxb2i4CrRxjVMVG903FiLNXg"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dQbDlkXclK7YGOPI",
+          "name": "MXAI - Google"
+        }
+      },
+      "typeVersion": 4.5
+    },
+    {
+      "id": "sticky-sheets-001",
+      "name": "Google Sheets Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1200,
+        100
+      ],
+      "parameters": {
+        "color": 2,
+        "width": 350,
+        "height": 200,
+        "content": "### \ud83d\udcca Step 5: Log to Google Sheets\n\n**Setup:**\n1. Create Google Sheet\n2. Add tab named: Responses\n3. Row 1 headers match the column list\n4. Connect Google Sheets credentials\n5. Set GOOGLE_SHEET_URL env var\n\n**Columns:** Timestamp, Email, First/Last Name, Phone, Overall %, Tier, Category, 6 category %s, Industry, Revenue Range, Timeline, Source, Tags, Email Sequence"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "generate-pdf-html-001",
+      "name": "Generate PDF HTML",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1500,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Generate PDF HTML stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-pdf-001",
+      "name": "PDF Generation Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1450,
+        100
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 300,
+        "height": 160,
+        "content": "### \ud83d\udcc4 Step 6: Generate PDF\n\n**Shows:**\n- Overall % score (not /33)\n- 6 category bars with color coding\n- Weakest category callout\n- Tier-specific next steps\n- Business profile\n- Discovery call CTA"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "convert-to-pdf-001",
+      "name": "Convert HTML to PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1750,
+        300
+      ],
+      "parameters": {
+        "url": "https://api.html2pdf.app/v1/generate",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "html",
+              "value": "={{ $json.pdfHtml }}"
+            },
+            {
+              "name": "format",
+              "value": "A4"
+            },
+            {
+              "name": "margin_top",
+              "value": "20"
+            },
+            {
+              "name": "margin_bottom",
+              "value": "20"
+            },
+            {
+              "name": "margin_left",
+              "value": "20"
+            },
+            {
+              "name": "margin_right",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "pdfFile"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "your-html2pdf-credential-id",
+          "name": "HTML2PDF API Key"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "sticky-convert-001",
+      "name": "PDF Conversion Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1700,
+        100
+      ],
+      "parameters": {
+        "color": 6,
+        "width": 300,
+        "height": 160,
+        "content": "### \ud83d\udd04 PDF Conversion Options\n\n**Option 1: html2pdf.app** (shown)\n- Free tier: 50 PDFs/month\n- Sign up: html2pdf.app\n\n**Option 2: Self-hosted Gotenberg**\n- Free, unlimited, requires Docker\n\n**Option 3: PDFShift**\n- 250 free/month"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "prepare-email-data-001",
+      "name": "Prepare Email Data",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2000,
+        300
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "email-to",
+              "name": "emailTo",
+              "type": "string",
+              "value": "={{ $('Generate PDF HTML').item.json.email }}"
+            },
+            {
+              "id": "first-name",
+              "name": "firstName",
+              "type": "string",
+              "value": "={{ $('Generate PDF HTML').item.json.firstName || 'there' }}"
+            },
+            {
+              "id": "score",
+              "name": "totalScore",
+              "type": "number",
+              "value": "={{ $('Generate PDF HTML').item.json.totalScore }}"
+            },
+            {
+              "id": "tier",
+              "name": "tier",
+              "type": "string",
+              "value": "={{ $('Generate PDF HTML').item.json.tier }}"
+            },
+            {
+              "id": "category",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $('Generate PDF HTML').item.json.category }}"
+            },
+            {
+              "id": "category-tag",
+              "name": "categoryTag",
+              "type": "string",
+              "value": "={{ $('Generate PDF HTML').item.json.categoryTag }}"
+            },
+            {
+              "id": "weakest-cat",
+              "name": "weakestCategoryLabel",
+              "type": "string",
+              "value": "={{ $('Generate PDF HTML').item.json.weakestCategoryLabel }}"
+            },
+            {
+              "id": "cal-link",
+              "name": "calLink",
+              "type": "string",
+              "value": "https://tinyurl.com/maxxam-call"
+            },
+            {
+              "id": "primary-cta",
+              "name": "primaryCTA",
+              "type": "string",
+              "value": "={{ $('Generate PDF HTML').item.json.primaryCTA }}"
+            }
+          ]
+        },
+        "includeOtherFields": true
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "send-results-email-001",
+      "name": "Send Results Email",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2250,
+        300
+      ],
+      "parameters": {
+        "sendTo": "={{ $json.emailTo }}",
+        "subject": "={{ $json.firstName }}, your AI Readiness Score: {{ $json.totalScore }}% \u2014 {{ $json.category }}",
+        "message": "",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "pdfFile"
+              }
+            ]
+          },
+          "appendAttributionToBody": false
+        },
+        "emailType": "html",
+        "messageHtml": "=<div style=\"font-family:-apple-system,Helvetica,Arial,sans-serif; max-width:580px; margin:0 auto; padding:20px; color:#1a1a1a;\">\n\n  <!-- Header -->\n  <div style=\"text-align:center; padding:24px 28px; background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%); border-radius:12px; margin-bottom:24px;\">\n    <div style=\"font-size:22px; font-weight:700; color:#FCC01E;\">MAXXAM AI</div>\n    <div style=\"color:#ccc; font-size:11px; margin-top:4px;\">AI Readiness Scorecard Results</div>\n  </div>\n\n  <p style=\"font-size:17px; font-weight:600; margin-bottom:8px;\">Hey {{ $json.firstName }}! \ud83d\udc4b</p>\n  <p style=\"font-size:15px; color:#444; line-height:1.75; margin-bottom:20px;\">Your AI Readiness Score is in. Here's how you scored across all 6 categories.</p>\n\n  <!-- Score Block -->\n  <div style=\"text-align:center; padding:28px; background:linear-gradient(135deg,#FCC01E 0%,#e6ac00 100%); border-radius:12px; margin-bottom:20px;\">\n    <div style=\"font-size:12px; font-weight:600; color:#1a1a1a; letter-spacing:0.08em; text-transform:uppercase;\">Overall Score</div>\n    <div style=\"font-size:56px; font-weight:800; color:#1a1a1a; line-height:1.1;\">{{ $json.totalScore }}<span style=\"font-size:22px;\">%</span></div>\n    <div style=\"display:inline-block; margin-top:12px; padding:8px 20px; background:#1a1a1a; color:#FCC01E; border-radius:50px; font-size:14px; font-weight:600;\">{{ $json.category }}</div>\n  </div>\n\n  <!-- Weakest Category Callout -->\n  <div style=\"padding:14px 18px; background:#fff8e1; border-left:4px solid #FCC01E; border-radius:6px; margin-bottom:20px; font-size:14px; color:#92400e;\">\n    \u26a0\ufe0f <strong>Your priority gap:</strong> {{ $json.weakestCategoryLabel }} \u2014 your PDF covers exactly what to build first.\n  </div>\n\n  <p style=\"font-size:14px; color:#444; line-height:1.75; margin-bottom:16px;\">Your personalized report is attached \u2014 it includes your full breakdown by category, your weakest area, and your exact next steps.</p>\n\n  {{ $json.categoryTag === 'hot-lead' || $json.categoryTag === 'warm-lead' ? '<div style=\"text-align:center; padding:24px; background:#1a1a1a; border-radius:12px; margin:20px 0;\"><div style=\"color:#fff; font-size:16px; font-weight:600; margin-bottom:12px;\">Ready to turn your score into a plan?</div><a href=\"' + $json.calLink + '\" style=\"display:inline-block; padding:13px 32px; background:#FCC01E; color:#1a1a1a; text-decoration:none; border-radius:50px; font-weight:700; font-size:15px;\">' + $json.primaryCTA + '</a><div style=\"margin-top:8px; font-size:11px; color:#888;\">Free 45-min discovery call \u00b7 No commitment</div></div>' : '<p style=\"font-size:14px; color:#444; line-height:1.75;\">When you\\'re ready to move, booking a free discovery call is the fastest way to turn this score into a roadmap: <a href=\"' + $json.calLink + '\" style=\"color:#FCC01E;\">tinyurl.com/maxxam-call</a></p>' }}\n\n  <p style=\"font-size:15px; color:#444; margin-top:20px;\">To your success,<br><strong>Reggie Johnson</strong><br>MAXXAM AI</p>\n\n  <div style=\"text-align:center; padding:16px; border-top:1px solid #e5e7eb; color:#999; font-size:11px; margin-top:24px;\">\n    <p>\u00a9 {{ $now.format('yyyy') }} MAXXAM AI \u00b7 Newnan, Georgia \u00b7 <a href=\"https://maxxam.ai\" style=\"color:#FCC01E;\">maxxam.ai</a></p>\n    <p>Questions? Just reply to this email \u2014 Reggie reads every one.</p>\n  </div>\n\n</div>"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "your-gmail-credential-id",
+          "name": "Gmail Account"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "sticky-email-001",
+      "name": "Email Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2200,
+        100
+      ],
+      "parameters": {
+        "color": 2,
+        "width": 300,
+        "height": 160,
+        "content": "### \ud83d\udce7 Step 7: Send Results Email\n\n**Includes:**\n- % score (not /33)\n- Tier badge\n- Weakest category callout\n- PDF attachment\n- Booking CTA (hot/warm leads only)\n\n**Setup:** Connect Gmail OAuth2 credentials"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "check-hot-lead-001",
+      "name": "Check if Hot Lead",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2500,
+        300
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "hot-lead-check",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.categoryTag }}",
+              "rightValue": "hot-lead"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "send-hot-lead-alert-001",
+      "name": "Send Hot Lead Alert",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2750,
+        200
+      ],
+      "parameters": {
+        "sendTo": "rtjohns1@gmail.com",
+        "subject": "\ud83d\udd25 HOT LEAD: {{ $json.firstName }} {{ $json.lastName }} \u2014 {{ $json.totalScore }}% AI Readiness",
+        "message": "",
+        "options": {
+          "appendAttributionToBody": false
+        },
+        "emailType": "html",
+        "messageHtml": "=<div style=\"font-family:-apple-system,sans-serif; padding:24px; max-width:560px;\">\n  <h1 style=\"color:#e74c3c; margin-bottom:4px;\">\ud83d\udd25 Hot Lead Alert</h1>\n  <p style=\"color:#666; font-size:13px;\">{{ $now.format('MMMM d, yyyy h:mm a') }}</p>\n\n  <div style=\"background:#f8f9fa; padding:20px; border-radius:8px; margin:16px 0;\">\n    <h2 style=\"margin:0 0 12px 0; font-size:18px;\">{{ $json.firstName }} {{ $json.lastName }}</h2>\n    <p style=\"margin:4px 0;\"><strong>Email:</strong> {{ $json.emailTo }}</p>\n    <p style=\"margin:4px 0;\"><strong>Phone:</strong> {{ $('Generate PDF HTML').item.json.phone || 'Not provided' }}</p>\n    <p style=\"margin:4px 0;\"><strong>Score:</strong> {{ $json.totalScore }}% \u2014 {{ $json.category }}</p>\n    <p style=\"margin:4px 0;\"><strong>Weakest:</strong> {{ $json.weakestCategoryLabel }}</p>\n    <p style=\"margin:4px 0;\"><strong>Industry:</strong> {{ $('Generate PDF HTML').item.json.industry }}</p>\n    <p style=\"margin:4px 0;\"><strong>Revenue:</strong> {{ $('Generate PDF HTML').item.json.revenue }}</p>\n    <p style=\"margin:4px 0;\"><strong>Timeline:</strong> {{ $('Generate PDF HTML').item.json.timeline }}</p>\n    <p style=\"margin:4px 0;\"><strong>Source:</strong> {{ $('Generate PDF HTML').item.json.source }}</p>\n  </div>\n\n  <div style=\"background:#27ae60; color:white; padding:16px 20px; border-radius:8px; text-align:center; margin-bottom:16px;\">\n    <p style=\"font-size:16px; font-weight:700; margin:0 0 6px 0;\">ACTION REQUIRED</p>\n    <p style=\"margin:0; font-size:14px;\">Reach out within 5 minutes for highest conversion.</p>\n  </div>\n\n  <p style=\"font-size:13px; color:#555;\"><strong>Category Scores:</strong> {{ $('Generate PDF HTML').item.json.catScoreStr }}</p>\n  <p style=\"font-size:13px; color:#555;\"><strong>Tags:</strong> {{ $('Generate PDF HTML').item.json.allTags }}</p>\n\n  <div style=\"margin-top:20px; text-align:center;\">\n    <a href=\"https://tinyurl.com/maxxam-call\" style=\"padding:12px 28px; background:#FCC01E; color:#1a1a1a; text-decoration:none; border-radius:50px; font-weight:700;\">View Booking Calendar</a>\n  </div>\n</div>"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "your-gmail-credential-id",
+          "name": "Gmail Account"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "sticky-alert-001",
+      "name": "Hot Lead Alert Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2700,
+        0
+      ],
+      "parameters": {
+        "color": 3,
+        "width": 300,
+        "height": 160,
+        "content": "### \ud83d\udd25 Step 8: Hot Lead Alert\n\n**Triggers when:** tier === 'advanced' (71-100%)\n\n**Alert shows:**\n- Name, email, phone\n- Score %, tier, weakest category\n- Industry / revenue / timeline\n- Full category score breakdown\n- All tags\n\n**Update sendTo** with your alert email"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "respond-to-webhook-001",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        3000,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Quiz submission received', score: $('Generate PDF HTML').item.json.overall, tier: $('Generate PDF HTML').item.json.tier, category: $('Generate PDF HTML').item.json.category }) }}"
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "sticky-response-001",
+      "name": "Response Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2950,
+        180
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 250,
+        "height": 100,
+        "content": "### \u2705 Final Step\nReturns JSON to quiz.html confirming submission was processed."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-setup-001",
+      "name": "Setup Checklist",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        300,
+        -200
+      ],
+      "parameters": {
+        "color": 5,
+        "width": 500,
+        "height": 280,
+        "content": "## \u2705 Setup Checklist\n\n### Before Activating:\n1. **Google Sheets**\n   - [ ] Create sheet with tab: Responses\n   - [ ] Set GOOGLE_SHEET_URL env var\n   - [ ] Connect Google Sheets credentials\n\n2. **Email**\n   - [ ] Connect Gmail OAuth2 credentials\n   - [ ] Update alert sendTo in 'Send Hot Lead Alert'\n\n3. **PDF Service**\n   - [ ] Sign up at html2pdf.app\n   - [ ] Add API key to credentials\n\n4. **quiz.html**\n   - [ ] Copy webhook URL from 'Quiz Webhook' node\n   - [ ] Replace YOUR_N8N_WEBHOOK_URL_HERE in quiz.html"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-testing-001",
+      "name": "Testing Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        850,
+        -200
+      ],
+      "parameters": {
+        "color": 6,
+        "width": 420,
+        "height": 280,
+        "content": "## \ud83e\uddea Test Payload\n\nPaste into webhook test panel:\n```json\n{\n  \"firstName\": \"Reggie\",\n  \"lastName\": \"Johnson\",\n  \"email\": \"reggie@maxxam.ai\",\n  \"phone\": \"555-1234\",\n  \"industry\": \"Health Care Practice, Dental, Mental Health\",\n  \"revenue\": \"$100K\\u2013$250k\",\n  \"timeline\": \"The next 30 days\",\n  \"source\": \"LinkedIn\",\n  \"overall\": 68,\n  \"tier\": \"building\",\n  \"weakestCategory\": \"trust\",\n  \"categoryScores\": {\n    \"visibility\": 85,\n    \"trust\": 40,\n    \"revenue\": 71,\n    \"scale\": 60,\n    \"operations\": 78,\n    \"mindset\": 75\n  },\n  \"completedAt\": \"2026-04-10T12:00:00.000Z\"\n}\n```"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Quiz Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Quiz Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Quiz Data": {
+      "main": [
+        [
+          {
+            "node": "Enrich Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Route by Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Category": {
+      "main": [
+        [
+          {
+            "node": "Merge All Leads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge All Leads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge All Leads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge All Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Leads": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Generate PDF HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate PDF HTML": {
+      "main": [
+        [
+          {
+            "node": "Convert HTML to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert HTML to PDF": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "Send Results Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Results Email": {
+      "main": [
+        [
+          {
+            "node": "Check if Hot Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Hot Lead": {
+      "main": [
+        [
+          {
+            "node": "Send Hot Lead Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Hot Lead Alert": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "maxxam-quiz-funnel-v2-20260410",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "maxxam-ai-readiness-quiz"
+  },
+  "tags": [
+    {
+      "name": "Quiz Funnel"
+    },
+    {
+      "name": "Lead Generation"
+    },
+    {
+      "name": "MAXXAM AI"
+    }
+  ]
+}

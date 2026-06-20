@@ -1,0 +1,342 @@
+{
+  "name": "MAXXAM AI — LinkedIn Daily Poster (Personal Profile)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "notes": "Runs Mon-Fri at 8:00 AM. Adjust cron to match your preferred post time."
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Content_Calendar",
+          "mode": "name"
+        },
+        "options": {
+          "headerRow": 1
+        }
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "Read Content Calendar",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [460, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dQbDlkXclK7YGOPI",
+          "name": "MXAI - Google"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-001",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-002",
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "LinkedIn",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-003",
+              "leftValue": "={{ $json.scheduled_date }}",
+              "rightValue": "={{ $now.format('yyyy-MM-dd') }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "Filter: Approved LinkedIn Posts for Today",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "cond-image",
+              "leftValue": "={{ $json.image_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0004-0004-0004-000000000004",
+      "name": "Has Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.image_url }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0005-0005-0005-000000000005",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 180],
+      "notes": "Downloads image asset for posts that include an image."
+    },
+    {
+      "parameters": {
+        "person": "urn:li:person:YOUR_LINKEDIN_PERSON_URN",
+        "text": "={{ $('Filter: Approved LinkedIn Posts for Today').item.json.hook }}\n\n{{ $('Filter: Approved LinkedIn Posts for Today').item.json.body }}\n\n{{ $('Filter: Approved LinkedIn Posts for Today').item.json.cta }}\n\n\ud83d\udd17 Follow MAXXAM AI for daily automation insights \u2192 www.maxxam.ai",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "id": "a1b2c3d4-0006-0006-0006-000000000006",
+      "name": "Post to LinkedIn (with image)",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [1340, 180],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "LINKEDIN_CREDENTIAL_ID",
+          "name": "LinkedIn OAuth2"
+        }
+      },
+      "notes": "Personal profile posting only — uses w_member_social scope. Replace YOUR_LINKEDIN_PERSON_URN with your personal LinkedIn URN. To find it: go to linkedin.com/in/YOUR-PROFILE, click More > Share profile, copy the URL and extract the ID, OR call https://api.linkedin.com/v2/userinfo after OAuth to get the sub field."
+    },
+    {
+      "parameters": {
+        "person": "urn:li:person:YOUR_LINKEDIN_PERSON_URN",
+        "text": "={{ $json.hook }}\n\n{{ $json.body }}\n\n{{ $json.cta }}\n\n\ud83d\udd17 Follow MAXXAM AI for daily automation insights \u2192 www.maxxam.ai",
+        "shareMediaCategory": "NONE",
+        "additionalFields": {}
+      },
+      "id": "a1b2c3d4-0007-0007-0007-000000000007",
+      "name": "Post to LinkedIn (text only)",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [1340, 420],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "LINKEDIN_CREDENTIAL_ID",
+          "name": "LinkedIn OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0008-0008-0008-000000000008",
+      "name": "Merge Post Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Content_Calendar",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Filter: Approved LinkedIn Posts for Today').item.json.id }}",
+            "status": "posted",
+            "posted_at": "={{ $now.toISO() }}",
+            "post_url": "={{ $json.id ? 'https://www.linkedin.com/feed/update/' + $json.id : '' }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            { "id": "id", "displayName": "id", "required": true, "defaultMatch": true, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "posted_at", "displayName": "posted_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "post_url", "displayName": "post_url", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0009-0009-0009-000000000009",
+      "name": "Update Sheet: Mark Posted",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [1780, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dQbDlkXclK7YGOPI",
+          "name": "MXAI - Google"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "err-001",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0010-0010-0010-000000000010",
+      "name": "Post Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1780, 500]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Content_Calendar",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Filter: Approved LinkedIn Posts for Today').item.json.id }}",
+            "status": "failed",
+            "notes": "={{ 'Auto-post failed: ' + $json.error }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            { "id": "id", "displayName": "id", "required": true, "defaultMatch": true, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "notes", "displayName": "notes", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0011-0011-0011-000000000011",
+      "name": "Update Sheet: Mark Failed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [2000, 500],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dQbDlkXclK7YGOPI",
+          "name": "MXAI - Google"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Read Content Calendar", "type": "main", "index": 0 }]]
+    },
+    "Read Content Calendar": {
+      "main": [[{ "node": "Filter: Approved LinkedIn Posts for Today", "type": "main", "index": 0 }]]
+    },
+    "Filter: Approved LinkedIn Posts for Today": {
+      "main": [[{ "node": "Has Image?", "type": "main", "index": 0 }]]
+    },
+    "Has Image?": {
+      "main": [
+        [{ "node": "Download Image", "type": "main", "index": 0 }],
+        [{ "node": "Post to LinkedIn (text only)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Download Image": {
+      "main": [[{ "node": "Post to LinkedIn (with image)", "type": "main", "index": 0 }]]
+    },
+    "Post to LinkedIn (with image)": {
+      "main": [[{ "node": "Merge Post Results", "type": "main", "index": 0 }]]
+    },
+    "Post to LinkedIn (text only)": {
+      "main": [[{ "node": "Merge Post Results", "type": "main", "index": 1 }]]
+    },
+    "Merge Post Results": {
+      "main": [
+        [{ "node": "Update Sheet: Mark Posted", "type": "main", "index": 0 }],
+        [{ "node": "Post Failed?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post Failed?": {
+      "main": [
+        [{ "node": "Update Sheet: Mark Failed", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["maxxam-ai", "social-media", "linkedin", "content"],
+  "meta": {
+    "instanceId": "maxxam-ai"
+  }
+}

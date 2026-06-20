@@ -1,0 +1,1196 @@
+{
+  "name": "AI Lead Management with GoHighLevel CRM & Google Drive",
+  "nodes": [
+    {
+      "id": "gmail-trigger-001",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        100,
+        320
+      ],
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "includeSpamTrash": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "{{ $credentials.gmailOAuth2 }}",
+          "name": "Gmail Account"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "switch-rules-001",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        300,
+        320
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "outputKey": "lead_email",
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "leftValue": "={{ $json.subject }}",
+                    "rightValue": "lead"
+                  }
+                ]
+              },
+              "renameOutput": true
+            },
+            {
+              "outputKey": "partnership",
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "or",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "leftValue": "={{ $json.subject }}",
+                    "rightValue": "partnership"
+                  },
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "leftValue": "={{ $json.subject }}",
+                    "rightValue": "collaboration"
+                  }
+                ]
+              },
+              "renameOutput": true
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "typeVersion": 3.1
+    },
+    {
+      "id": "ghl-add-contact-001",
+      "name": "Add lead to CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        400,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://rest.gohighlevel.com/v1/contacts/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "goHighLevelApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $credentials.goHighLevelApi.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.from }}"
+            },
+            {
+              "name": "firstName",
+              "value": "={{ $json.from.split('@')[0] }}"
+            },
+            {
+              "name": "companyName",
+              "value": "={{ $json.from.split('@')[1] }}"
+            },
+            {
+              "name": "source",
+              "value": "Gmail Automation"
+            },
+            {
+              "name": "tags",
+              "value": [
+                "New Lead",
+                "Email Inquiry"
+              ]
+            },
+            {
+              "name": "customFields",
+              "value": {
+                "email_subject": "={{ $json.subject }}",
+                "inquiry_date": "={{ $now }}",
+                "lead_status": "New"
+              }
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "goHighLevelApi": {
+          "id": "{{ $credentials.goHighLevelApi }}",
+          "name": "GoHighLevel API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "openai-model-crm-001",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        220,
+        320
+      ],
+      "parameters": {
+        "model": "chatgpt-4o-latest",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 800
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "{{ $credentials.openAiApi }}",
+          "name": "OpenAI API"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "ghl-crm-agent-001",
+      "name": "GoHighLevel CRM Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        500,
+        200
+      ],
+      "parameters": {
+        "text": "=Process this lead for GoHighLevel CRM:\n\nEmail: {{ $json.from }}\nSubject: {{ $json.subject }}\nCompany Domain: {{ $json.from.split('@')[1] }}\n\nExtract and format lead information for CRM entry including:\n1. Contact details\n2. Company information\n3. Lead source and classification\n4. Next action steps",
+        "options": {
+          "systemMessage": "You are a GoHighLevel CRM specialist. Process incoming leads and format them properly for CRM entry. Focus on data quality, lead scoring, and actionable next steps. Always provide structured output for CRM integration.",
+          "maxIterations": 3
+        }
+      },
+      "typeVersion": 1.7
+    },
+    {
+      "id": "if-condition-001",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        700,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              },
+              "leftValue": "={{ $json.from }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "find-website-url-001",
+      "name": "Find website URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        900,
+        160
+      ],
+      "parameters": {
+        "url": "=https://api.hunter.io/v2/domain-search?domain={{ $json.from.split('@')[1] }}&api_key={{ $credentials.hunterApi }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "{{ $credentials.hunterApi }}",
+          "name": "Hunter API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "scrape-website-url-001",
+      "name": "Scrape website URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1100,
+        100
+      ],
+      "parameters": {
+        "url": "={{ $('Find website URL').item.json.data.organization.website || 'https://example.com' }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 10000
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "markdown-conversion-001",
+      "name": "Markdown",
+      "type": "n8n-nodes-base.htmlExtract",
+      "position": [
+        1300,
+        100
+      ],
+      "parameters": {
+        "operation": "extractContent",
+        "extractionMode": "html",
+        "sourceData": "={{ $json.data }}",
+        "options": {}
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "find-linkedin-url-001",
+      "name": "Find LinkedIn URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1100,
+        200
+      ],
+      "parameters": {
+        "url": "=https://api.proxycrawl.com/scraper?token={{ $credentials.proxycrawlApi }}&url=https://www.google.com/search?q={{ encodeURIComponent($json.from.split('@')[1]) }}+linkedin",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "{{ $credentials.proxycrawlApi }}",
+          "name": "ProxyCrawl API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "lead-summary-agent-001",
+      "name": "Lead summary Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1500,
+        160
+      ],
+      "parameters": {
+        "text": "=Create comprehensive lead analysis for GoHighLevel CRM:\n\nEmail: {{ $('Gmail Trigger').item.json.from }}\nSubject: {{ $('Gmail Trigger').item.json.subject }}\nWebsite Content: {{ $('Markdown').item.json.content || 'Not available' }}\nLinkedIn Info: {{ $('Find LinkedIn URL').item.json.linkedin_url || 'Not found' }}\n\nGenerate detailed lead profile with:\n1. Company overview and industry\n2. Business potential and revenue opportunity\n3. Pain points and solution fit\n4. Recommended sales approach\n5. Priority level and next actions\n6. CRM tags and categorization",
+        "options": {
+          "systemMessage": "You are an expert lead analyst for GoHighLevel CRM. Create comprehensive, actionable lead profiles that help sales teams prioritize prospects and craft targeted approaches. Focus on business value, competitive analysis, and strategic sales recommendations with specific CRM categorization.",
+          "maxIterations": 4
+        }
+      },
+      "typeVersion": 1.7
+    },
+    {
+      "id": "openai-model-lead-001",
+      "name": "OpenAI Chat Model2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        1320,
+        320
+      ],
+      "parameters": {
+        "model": "chatgpt-4o-latest",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 2000
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "{{ $credentials.openAiApi }}",
+          "name": "OpenAI API"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "create-gdrive-folder-001",
+      "name": "Create Google Drive Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        1700,
+        100
+      ],
+      "parameters": {
+        "operation": "create",
+        "resource": "folder",
+        "name": "=Lead Analysis - {{ $('Gmail Trigger').item.json.from.split('@')[1] }} - {{ $now.format('yyyy-MM-dd') }}",
+        "options": {
+          "parentsUi": {
+            "parentIdType": "id",
+            "parentId": "{{ $credentials.googleDriveFolderId }}"
+          }
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{ $credentials.googleDriveOAuth2Api }}",
+          "name": "Google Drive Account"
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "save-lead-analysis-001",
+      "name": "Save Lead Analysis to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        1900,
+        160
+      ],
+      "parameters": {
+        "operation": "upload",
+        "resource": "file",
+        "name": "=Lead_Analysis_{{ $('Gmail Trigger').item.json.from.split('@')[1] }}_{{ $now.format('yyyy-MM-dd_HH-mm') }}.txt",
+        "binaryData": false,
+        "fileContent": "=LEAD ANALYSIS REPORT\n===================\n\nContact Information:\n- Email: {{ $('Gmail Trigger').item.json.from }}\n- Company: {{ $('Gmail Trigger').item.json.from.split('@')[1] }}\n- Subject: {{ $('Gmail Trigger').item.json.subject }}\n- Date: {{ $now }}\n\nLead Analysis:\n{{ $('Lead summary Agent').item.json.output || 'Analysis in progress' }}\n\nWebsite Information:\n{{ $('Markdown').item.json.content ? $('Markdown').item.json.content.substring(0, 1000) + '...' : 'No website content available' }}\n\nLinkedIn Profile:\n{{ $('Find LinkedIn URL').item.json.linkedin_url || 'Not found' }}\n\nNext Steps:\n1. Follow up within 24 hours\n2. Schedule discovery call\n3. Send personalized proposal\n4. Update CRM with interaction notes\n\n---\nGenerated by AI Lead Management System",
+        "options": {
+          "parentsUi": {
+            "parentIdType": "id",
+            "parentId": "={{ $('Create Google Drive Folder').item.json.id }}"
+          }
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{ $credentials.googleDriveOAuth2Api }}",
+          "name": "Google Drive Account"
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "update-ghl-contact-001",
+      "name": "Update GoHighLevel Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2100,
+        160
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $('Add lead to CRM').item.json.contact.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "goHighLevelApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $credentials.goHighLevelApi.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "customFields",
+              "value": {
+                "lead_analysis": "={{ $('Lead summary Agent').item.json.output }}",
+                "website_url": "={{ $('Find website URL').item.json.data.organization.website || '' }}",
+                "linkedin_url": "={{ $('Find LinkedIn URL').item.json.linkedin_url || '' }}",
+                "analysis_date": "={{ $now }}",
+                "drive_folder_id": "={{ $('Create Google Drive Folder').item.json.id }}",
+                "analysis_file_id": "={{ $('Save Lead Analysis to Drive').item.json.id }}",
+                "lead_score": "High",
+                "status": "Analyzed"
+              }
+            },
+            {
+              "name": "tags",
+              "value": [
+                "Analyzed",
+                "Website Scraped",
+                "High Priority"
+              ]
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "goHighLevelApi": {
+          "id": "{{ $credentials.goHighLevelApi }}",
+          "name": "GoHighLevel API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "ai-agent-main-001",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        500,
+        400
+      ],
+      "parameters": {
+        "text": "=Analyze this email for GoHighLevel CRM processing:\n\nFrom: {{ $json.from }}\nSubject: {{ $json.subject }}\nContent: {{ $json.textPlain || $json.textHtml }}\n\nDetermine:\n1. Email category (lead, partnership, support, other)\n2. Priority level (high, medium, low)\n3. Suggested response strategy\n4. CRM tags and pipeline placement\n5. Automation triggers needed",
+        "options": {
+          "systemMessage": "You are a GoHighLevel CRM email processing specialist. Analyze emails to categorize them properly for CRM automation. Focus on lead scoring, pipeline placement, and automation trigger recommendations. Provide structured output for seamless CRM integration.",
+          "maxIterations": 3
+        }
+      },
+      "typeVersion": 1.7
+    },
+    {
+      "id": "openai-model-main-001",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        320,
+        560
+      ],
+      "parameters": {
+        "model": "chatgpt-4o-latest",
+        "options": {
+          "temperature": 0.4,
+          "maxTokens": 1200
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "{{ $credentials.openAiApi }}",
+          "name": "OpenAI API"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "structured-parser-001",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        460,
+        560
+      ],
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"email_category\": \"lead|partnership|support|other\",\n  \"priority\": \"high|medium|low\",\n  \"lead_score\": \"hot|warm|cold\",\n  \"pipeline_stage\": \"New Lead|Contacted|Qualified|Proposal|Closed\",\n  \"suggested_response\": \"Brief response suggestion\",\n  \"crm_tags\": [\"tag1\", \"tag2\", \"tag3\"],\n  \"automation_triggers\": [\"trigger1\", \"trigger2\"],\n  \"next_action\": \"Immediate action required\"\n}"
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "create-ghl-opportunity-001",
+      "name": "Create GoHighLevel Opportunity",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        700,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/pipelines/{{ $credentials.goHighLevelPipelineId }}/opportunities/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "goHighLevelApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $credentials.goHighLevelApi.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "=Lead Inquiry - {{ $('Gmail Trigger').item.json.from.split('@')[1] }}"
+            },
+            {
+              "name": "contactId",
+              "value": "={{ $('Add lead to CRM').item.json.contact.id }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $json.pipeline_stage }}"
+            },
+            {
+              "name": "monetaryValue",
+              "value": 5000
+            },
+            {
+              "name": "notes",
+              "value": "=Email Subject: {{ $('Gmail Trigger').item.json.subject }}\nAI Analysis: {{ $json.suggested_response }}\nPriority: {{ $json.priority }}\nLead Score: {{ $json.lead_score }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "goHighLevelApi": {
+          "id": "{{ $credentials.goHighLevelApi }}",
+          "name": "GoHighLevel API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "save-email-analysis-001",
+      "name": "Save Email Analysis to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        900,
+        500
+      ],
+      "parameters": {
+        "operation": "upload",
+        "resource": "file",
+        "name": "=Email_Analysis_{{ $('Gmail Trigger').item.json.from.split('@')[1] }}_{{ $now.format('yyyy-MM-dd_HH-mm') }}.json",
+        "binaryData": false,
+        "fileContent": "={\n  \"email_metadata\": {\n    \"from\": \"{{ $('Gmail Trigger').item.json.from }}\",\n    \"subject\": \"{{ $('Gmail Trigger').item.json.subject }}\",\n    \"date\": \"{{ $('Gmail Trigger').item.json.date }}\",\n    \"analysis_date\": \"{{ $now }}\"\n  },\n  \"ai_analysis\": {{ JSON.stringify($json) }},\n  \"crm_integration\": {\n    \"contact_id\": \"{{ $('Add lead to CRM').item.json.contact.id || 'N/A' }}\",\n    \"opportunity_id\": \"{{ $('Create GoHighLevel Opportunity').item.json.id || 'N/A' }}\",\n    \"pipeline_stage\": \"{{ $json.pipeline_stage }}\",\n    \"tags_applied\": {{ JSON.stringify($json.crm_tags) }}\n  },\n  \"research_data\": {\n    \"website_found\": \"{{ $('Find website URL').item.json.data.organization.website || 'Not found' }}\",\n    \"linkedin_profile\": \"{{ $('Find LinkedIn URL').item.json.linkedin_url || 'Not found' }}\"\n  }\n}",
+        "options": {
+          "parentsUi": {
+            "parentIdType": "id",
+            "parentId": "={{ $('Create Google Drive Folder').item.json.id }}"
+          }
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "{{ $credentials.googleDriveOAuth2Api }}",
+          "name": "Google Drive Account"
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "gmail-send-001",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1100,
+        400
+      ],
+      "parameters": {
+        "operation": "send",
+        "resource": "message",
+        "toList": "={{ $('Gmail Trigger').item.json.from }}",
+        "subject": "=Re: {{ $('Gmail Trigger').item.json.subject }}",
+        "message": "=Thank you for your inquiry. We've received your message and our team will respond within 24 hours.\n\nWe've automatically processed your request and added you to our CRM system for follow-up.\n\nBest regards,\nAI Lead Management System\n\n---\nThis is an automated response powered by GoHighLevel CRM integration.",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "{{ $credentials.gmailOAuth2 }}",
+          "name": "Gmail Account"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "switch-response-001",
+      "name": "Switch1",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1300,
+        400
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "outputKey": "high_priority",
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "or",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equal"
+                    },
+                    "leftValue": "={{ $('AI Agent').item.json.priority }}",
+                    "rightValue": "high"
+                  },
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equal"
+                    },
+                    "leftValue": "={{ $('AI Agent').item.json.lead_score }}",
+                    "rightValue": "hot"
+                  }
+                ]
+              },
+              "renameOutput": true
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "typeVersion": 3.1
+    },
+    {
+      "id": "gmail-priority-001",
+      "name": "Gmail1",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1500,
+        400
+      ],
+      "parameters": {
+        "operation": "send",
+        "resource": "message",
+        "toList": "sales@company.com",
+        "subject": "=\ud83d\udd25 HIGH PRIORITY LEAD: {{ $('Gmail Trigger').item.json.subject }}",
+        "message": "=\ud83d\udea8 HIGH PRIORITY LEAD ALERT\n\n\ud83d\udce7 From: {{ $('Gmail Trigger').item.json.from }}\n\ud83d\udccb Subject: {{ $('Gmail Trigger').item.json.subject }}\n\ud83c\udfe2 Company: {{ $('Gmail Trigger').item.json.from.split('@')[1] }}\n\n\ud83e\udd16 AI Analysis:\nPriority: {{ $('AI Agent').item.json.priority }}\nLead Score: {{ $('AI Agent').item.json.lead_score }}\nCategory: {{ $('AI Agent').item.json.email_category }}\n\n\ud83d\udcca CRM Integration:\nContact ID: {{ $('Add lead to CRM').item.json.contact.id }}\nOpportunity ID: {{ $('Create GoHighLevel Opportunity').item.json.id }}\nPipeline Stage: {{ $('AI Agent').item.json.pipeline_stage }}\n\n\ud83d\udcc1 Files Saved to Google Drive:\nFolder ID: {{ $('Create Google Drive Folder').item.json.id }}\nAnalysis File: {{ $('Save Lead Analysis to Drive').item.json.name }}\n\n\ud83c\udfaf Next Action: {{ $('AI Agent').item.json.next_action }}\n\n\u26a1 IMMEDIATE FOLLOW-UP REQUIRED!\n\n---\nAutomated by GoHighLevel + n8n Integration",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "{{ $credentials.gmailOAuth2 }}",
+          "name": "Gmail Account"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "sticky-main-workflow-001",
+      "name": "\ud83d\ude80 AI Lead Management System",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        50,
+        50
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 1200,
+        "height": 120,
+        "content": "# \ud83d\ude80 AI Lead Management System with GoHighLevel CRM & Google Drive\n\n**Automated Email Processing** \u2192 **Web Research & Scraping** \u2192 **AI Analysis** \u2192 **CRM Integration** \u2192 **File Storage** \u2192 **Priority Alerts**\n\nThis workflow automatically processes incoming emails, researches leads, stores analysis in Google Drive, and manages your entire sales pipeline in GoHighLevel CRM."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-email-processing-001",
+      "name": "\ud83d\udce7 Email Processing Pipeline",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        80,
+        250
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 400,
+        "height": 180,
+        "content": "## \ud83d\udce7 Email Processing Pipeline\n\n**Gmail Trigger**: Monitors inbox for new emails\n- Polls every minute for new messages\n- Filters out spam and trash\n- Processes all incoming inquiries\n\n**Smart Switch**: Routes emails by content\n- Lead inquiries \u2192 CRM processing\n- Partnerships \u2192 Specialized handling\n- Other emails \u2192 General processing"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-crm-integration-001",
+      "name": "\ud83c\udfe2 GoHighLevel CRM Integration",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        480,
+        80
+      ],
+      "parameters": {
+        "color": 5,
+        "width": 450,
+        "height": 200,
+        "content": "## \ud83c\udfe2 GoHighLevel CRM Integration\n\n**CRM Agent**: AI-powered lead processing\n- Extracts contact details from emails\n- Formats data for CRM entry\n- Determines lead classification\n\n**Add Contact**: Creates new leads in GHL\n- Auto-fills contact information\n- Adds custom fields and tags\n- Sets initial lead status\n\n**Opportunity Creation**: Builds sales pipeline\n- Creates opportunities with monetary value\n- Sets appropriate pipeline stage\n- Links to contact record"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-research-scraping-001",
+      "name": "\ud83d\udd0d Web Research & Scraping",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        880,
+        50
+      ],
+      "parameters": {
+        "color": 6,
+        "width": 500,
+        "height": 220,
+        "content": "## \ud83d\udd0d Web Research & Scraping\n\n**Website Discovery**: Finds company websites\n- Uses Hunter.io API for domain research\n- Extracts organization details\n- Identifies primary business website\n\n**Content Scraping**: Extracts website content\n- Scrapes full website content\n- Converts HTML to readable markdown\n- Processes for AI analysis\n\n**LinkedIn Search**: Locates social profiles\n- Searches for company LinkedIn pages\n- Uses ProxyCrawl for reliable scraping\n- Stores profile URLs for reference"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-ai-analysis-001",
+      "name": "\ud83e\udd16 AI Analysis Engine",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1450,
+        80
+      ],
+      "parameters": {
+        "color": 3,
+        "width": 420,
+        "height": 180,
+        "content": "## \ud83e\udd16 AI Analysis Engine\n\n**Lead Summary Agent**: Creates comprehensive profiles\n- Analyzes company overview and industry\n- Calculates business potential and ROI\n- Identifies pain points and solution fit\n- Recommends sales approach strategies\n\n**Uses GPT-4o Latest** for high-quality analysis\n- Temperature: 0.3 for balanced creativity\n- Max tokens: 2000 for detailed reports\n- Structured output for CRM integration"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-google-drive-001",
+      "name": "\ud83d\udcc1 Google Drive File Management",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1680,
+        50
+      ],
+      "parameters": {
+        "color": 2,
+        "width": 450,
+        "height": 200,
+        "content": "## \ud83d\udcc1 Google Drive File Management\n\n**Folder Creation**: Organizes lead files\n- Creates folders by company and date\n- Stores in designated parent directory\n- Maintains organized file structure\n\n**Analysis Storage**: Saves comprehensive reports\n- Lead analysis as readable text files\n- Email data as structured JSON\n- Timestamps for tracking and auditing\n\n**CRM Integration**: Links files to records\n- Stores Drive file IDs in GoHighLevel\n- Creates accessible file references\n- Enables team collaboration"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-email-automation-001",
+      "name": "\ud83d\udcec Email Automation",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        480,
+        350
+      ],
+      "parameters": {
+        "color": 1,
+        "width": 420,
+        "height": 200,
+        "content": "## \ud83d\udcec Email Automation\n\n**Main AI Agent**: Intelligent email processing\n- Categorizes emails (lead, partnership, support)\n- Assigns priority levels (high, medium, low)\n- Determines lead scores (hot, warm, cold)\n- Suggests response strategies\n\n**Structured Parser**: Formats AI output\n- Ensures consistent data structure\n- Validates CRM field requirements\n- Provides automation trigger recommendations\n\n**Auto-Response**: Sends acknowledgments\n- Professional automated replies\n- Sets expectations for follow-up\n- Confirms CRM integration status"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-priority-alerts-001",
+      "name": "\ud83d\udea8 Priority Alert System",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1200,
+        350
+      ],
+      "parameters": {
+        "color": 1,
+        "width": 400,
+        "height": 180,
+        "content": "## \ud83d\udea8 Priority Alert System\n\n**Smart Switch**: Identifies high-priority leads\n- Checks priority level = \"high\"\n- Monitors lead score = \"hot\"\n- Triggers immediate notifications\n\n**Instant Alerts**: Notifies sales team\n- Sends detailed lead information\n- Includes AI analysis summary\n- Provides CRM record links\n- Contains Google Drive file references\n- Demands immediate follow-up action"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-setup-instructions-001",
+      "name": "\u2699\ufe0f Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        50,
+        600
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 600,
+        "height": 300,
+        "content": "## \u2699\ufe0f Setup Instructions\n\n### Required API Credentials:\n- **OpenAI API**: For AI analysis (GPT-4o)\n- **Gmail OAuth2**: For email monitoring\n- **GoHighLevel API**: For CRM operations\n- **Hunter.io API**: For domain research\n- **ProxyCrawl API**: For web scraping\n- **Google Drive OAuth2**: For file storage\n\n### GoHighLevel Configuration:\n- Set up custom fields for analysis data\n- Create pipeline for lead opportunities\n- Configure tags for lead categorization\n- Set monetary values for opportunities\n\n### Google Drive Setup:\n- Create parent folder for lead storage\n- Set proper sharing permissions\n- Configure OAuth2 access"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-workflow-benefits-001",
+      "name": "\ud83d\udca1 Workflow Benefits",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        700,
+        600
+      ],
+      "parameters": {
+        "color": 3,
+        "width": 500,
+        "height": 300,
+        "content": "## \ud83d\udca1 Workflow Benefits\n\n### \ud83c\udfaf Lead Management:\n- **100% Automation**: Zero manual email processing\n- **Instant CRM Entry**: Immediate lead capture\n- **AI-Powered Analysis**: Deep prospect insights\n- **Research Integration**: Complete company profiles\n\n### \ud83d\udcca Business Impact:\n- **Faster Response Times**: Immediate acknowledgments\n- **Better Lead Scoring**: AI-driven prioritization\n- **Complete Documentation**: All data stored and linked\n- **Sales Team Efficiency**: Pre-qualified opportunities\n\n### \ud83d\udd04 Scalability:\n- **Handles High Volume**: Processes unlimited emails\n- **Consistent Quality**: Standardized lead processing\n- **Team Collaboration**: Shared files and CRM access\n- **Growth Ready**: Scales with your business"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-customization-001",
+      "name": "\ud83d\udee0\ufe0f Customization Options",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1250,
+        600
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 500,
+        "height": 300,
+        "content": "## \ud83d\udee0\ufe0f Customization Options\n\n### \ud83c\udfa8 Email Routing:\n- Modify switch conditions for your keywords\n- Add new categories (support, sales, etc.)\n- Customize priority scoring rules\n\n### \ud83e\udd16 AI Prompts:\n- Adapt analysis prompts for your industry\n- Modify lead scoring criteria\n- Customize response templates\n\n### \ud83c\udfe2 CRM Fields:\n- Add custom fields to GoHighLevel\n- Modify pipeline stages and values\n- Customize tag categories\n\n### \ud83d\udcc1 File Organization:\n- Change folder naming conventions\n- Modify file formats and templates\n- Add additional metadata fields\n\n### \ud83d\udce7 Notifications:\n- Customize alert recipients\n- Modify notification templates\n- Add Slack/Teams integration"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "GoHighLevel CRM Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add lead to CRM": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "GoHighLevel CRM Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GoHighLevel CRM Agent": {
+      "main": [
+        [
+          {
+            "node": "Add lead to CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Find website URL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Find LinkedIn URL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Google Drive Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find website URL": {
+      "main": [
+        [
+          {
+            "node": "Scrape website URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape website URL": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Lead summary Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find LinkedIn URL": {
+      "main": [
+        [
+          {
+            "node": "Lead summary Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead summary Agent": {
+      "main": [
+        [
+          {
+            "node": "Save Lead Analysis to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Lead summary Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Drive Folder": {
+      "main": [
+        [
+          {
+            "node": "Lead summary Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Lead Analysis to Drive": {
+      "main": [
+        [
+          {
+            "node": "Update GoHighLevel Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create GoHighLevel Opportunity",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create GoHighLevel Opportunity": {
+      "main": [
+        [
+          {
+            "node": "Save Email Analysis to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    "AI",
+    "GoHighLevel",
+    "CRM",
+    "Lead Management",
+    "Google Drive",
+    "Email Automation"
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-21T00:00:00.000Z",
+  "versionId": "1"
+}

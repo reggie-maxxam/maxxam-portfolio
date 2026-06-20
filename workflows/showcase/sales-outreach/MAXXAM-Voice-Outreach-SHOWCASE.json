@@ -1,0 +1,1141 @@
+{
+  "name": "MAXXAM Voice Outreach \u2014 Cold Caller",
+  "nodes": [
+    {
+      "id": "a1",
+      "name": "Mon-Fri 10am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a2",
+      "name": "Read Prospect Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        460,
+        200
+      ],
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "mode": "id",
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY"
+        },
+        "sheetName": {
+          "mode": "id",
+          "value": "0"
+        },
+        "options": {
+          "alwaysOutputData": true
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "MXAI - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "a3",
+      "name": "Filter Callable Prospects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Filter Callable Prospects stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      }
+    },
+    {
+      "id": "a4",
+      "name": "Daily Cap 8 Calls",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        900,
+        200
+      ],
+      "parameters": {
+        "maxItems": 8
+      }
+    },
+    {
+      "id": "a5",
+      "name": "One at a Time",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        200
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "a6",
+      "name": "Fire Retell Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/v2/create-phone-call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer [FILL_IN: RETELL_API_KEY]"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"from_number\": \"[FILL_IN: MAXXAM prospecting phone number]\",\n  \"to_number\": \"{{ $json.phone }}\",\n  \"agent_id\": \"[FILL_IN: Retell agent_id from dashboard]\",\n  \"retell_llm_dynamic_variables\": {\n    \"first_name\": \"{{ $json.first_name }}\",\n    \"last_name\": \"{{ $json.last_name || '' }}\",\n    \"practice_name\": \"{{ $json.practice_name }}\",\n    \"phone\": \"{{ $json.phone }}\",\n    \"city\": \"{{ $json.city }}\",\n    \"email\": \"{{ $json.email || '' }}\"\n  },\n  \"metadata\": {\n    \"row_number\": {{ $json.row_number }},\n    \"first_name\": \"{{ $json.first_name }}\",\n    \"practice_name\": \"{{ $json.practice_name }}\",\n    \"email\": \"{{ $json.email || '' }}\",\n    \"phone\": \"{{ $json.phone }}\",\n    \"call_type\": \"{{ $json._call_type }}\"\n  }\n}"
+      }
+    },
+    {
+      "id": "a7",
+      "name": "Mark as Calling",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1560,
+        200
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "mode": "id",
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY"
+        },
+        "sheetName": {
+          "mode": "id",
+          "value": "0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "call_1_date": "={{ $('One at a Time').item.json._call_type === 'call_1' ? $now.format('yyyy-MM-dd') : $('One at a Time').item.json.call_1_date }}",
+            "status": "calling"
+          },
+          "matchingColumns": [
+            "phone"
+          ],
+          "schema": [
+            {
+              "id": "call_1_date",
+              "displayName": "call_1_date",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": true,
+              "defaultMatch": true,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "MXAI - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "b1",
+      "name": "Retell Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        540
+      ],
+      "webhookId": "retell-prospector",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retell-prospector",
+        "responseMode": "onReceived",
+        "responseData": "",
+        "options": {}
+      }
+    },
+    {
+      "id": "b2",
+      "name": "Is Call Ended",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.0,
+      "position": [
+        460,
+        540
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "call_ended",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b3",
+      "name": "Extract Call Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        680,
+        480
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "row_number",
+              "value": "={{ $json.body.call.metadata.row_number }}",
+              "type": "number"
+            },
+            {
+              "id": "2",
+              "name": "first_name",
+              "value": "={{ $json.body.call.metadata.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "practice_name",
+              "value": "={{ $json.body.call.metadata.practice_name }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "email",
+              "value": "={{ $json.body.call.metadata.email }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "phone",
+              "value": "={{ $json.body.call.metadata.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "6",
+              "name": "call_type",
+              "value": "={{ $json.body.call.metadata.call_type }}",
+              "type": "string"
+            },
+            {
+              "id": "7",
+              "name": "disconnection_reason",
+              "value": "={{ $json.body.call.disconnection_reason }}",
+              "type": "string"
+            },
+            {
+              "id": "8",
+              "name": "transcript",
+              "value": "={{ $json.body.call.transcript || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "9",
+              "name": "duration_ms",
+              "value": "={{ $json.body.call.duration_ms || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "10",
+              "name": "call_summary",
+              "value": "={{ $json.body.call.call_analysis?.call_summary || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b4",
+      "name": "Normalize Outcome Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        480
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Normalize Outcome Type stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      }
+    },
+    {
+      "id": "b5",
+      "name": "Route by Outcome Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1120,
+        480
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "rules": [
+            {
+              "outputKey": "voicemail",
+              "conditions": {
+                "options": {},
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._outcome_type }}",
+                    "rightValue": "voicemail",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "no_answer",
+              "conditions": {
+                "options": {},
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._outcome_type }}",
+                    "rightValue": "no_answer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      }
+    },
+    {
+      "id": "b6",
+      "name": "Update \u2014 Voicemail",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1340,
+        360
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "mode": "id",
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY"
+        },
+        "sheetName": {
+          "mode": "id",
+          "value": "0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "call_1_outcome": "voicemail",
+            "call_1_date": "={{ $now.format('yyyy-MM-dd') }}",
+            "call_notes": "=Voicemail left {{ $now.format('yyyy-MM-dd') }}. {{ $json.call_summary }}",
+            "status": "voicemail"
+          },
+          "matchingColumns": [
+            "phone"
+          ],
+          "schema": [
+            {
+              "id": "call_1_outcome",
+              "displayName": "call_1_outcome",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_1_date",
+              "displayName": "call_1_date",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_notes",
+              "displayName": "call_notes",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": true,
+              "defaultMatch": true,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "MXAI - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "b6b",
+      "name": "Has Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.0,
+      "position": [
+        1560,
+        360
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b6c",
+      "name": "Send Email 1 \u2014 Voicemail Follow-Up",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1780,
+        300
+      ],
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "no-shows at {{ $json.practice_name }}",
+        "emailType": "html",
+        "message": "=<p>Hi {{ $json.first_name }},</p><p>The average therapy practice with 20+ weekly sessions loses $400\u2013700/month to cancellations that never get backfilled. Not because there's no one to fill them \u2014 the waitlist exists. The backfill process is just slow and manual.</p><p>I help practices automate the waitlist-to-booking loop. When a slot opens, the next patient gets a text with a one-tap booking link. Most slots fill the same day.</p><p>One practice went from a 38% rebooking rate to 85% in 30 days. Nothing changed except the system.</p><p>Worth 20 minutes to see if the numbers make sense for {{ $json.practice_name }}?</p><p>Reggie Johnson<br>MAXXAM AI | reggie@maxxam.ai<br>Free diagnostic: <a href='https://tinyurl.com/maxxam-call'>https://tinyurl.com/maxxam-call</a></p><p>P.S. Curious how your practice scores on automation readiness? \u2192 <a href='https://maxxam.ai/quiz.html'>https://maxxam.ai/quiz.html</a></p>",
+        "options": {
+          "senderName": "Reggie Johnson"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "[FILL_IN: MXAI Gmail credential ID]",
+          "name": "MXAI - Gmail"
+        }
+      }
+    },
+    {
+      "id": "b7",
+      "name": "Update \u2014 No Answer",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1340,
+        500
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "mode": "id",
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY"
+        },
+        "sheetName": {
+          "mode": "id",
+          "value": "0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "call_1_outcome": "={{ $json.call_type === 'call_1' ? 'no_answer' : $json.call_1_outcome }}",
+            "call_1_date": "={{ $json.call_type === 'call_1' ? $now.format('yyyy-MM-dd') : $json.call_1_date }}",
+            "call_2_outcome": "={{ $json.call_type === 'call_2' ? 'no_answer' : '' }}",
+            "call_2_date": "={{ $json.call_type === 'call_1' ? $now.plus(1, 'day').format('yyyy-MM-dd') : $json.call_2_date }}"
+          },
+          "matchingColumns": [
+            "phone"
+          ],
+          "schema": [
+            {
+              "id": "call_1_outcome",
+              "displayName": "call_1_outcome",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_1_date",
+              "displayName": "call_1_date",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_2_outcome",
+              "displayName": "call_2_outcome",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_2_date",
+              "displayName": "call_2_date",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": true,
+              "defaultMatch": true,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "MXAI - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "b8",
+      "name": "Classify Transcript",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1340,
+        640
+      ],
+      "parameters": {
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are classifying the outcome of a cold sales call transcript. Classify the outcome as exactly one of:\n\n- answered_interested: Prospect engaged, expressed curiosity, agreed to learn more, or said yes to a call\n- answered_declined: Prospect clearly said not interested, stop calling, or remove me\n- wrong_number: This was the wrong person or a personal number, not the business owner\n- no_answer: No meaningful conversation (immediate hang-up, less than 5 seconds)\n\nReturn ONLY valid JSON. No explanation.",
+              "type": "SystemMessagePromptTemplate"
+            },
+            {
+              "message": "=Transcript:\n{{ $json.transcript }}\n\nDisconnection reason: {{ $json.disconnection_reason }}\nCall duration: {{ Math.round($json.duration_ms / 1000) }} seconds\n\nReturn JSON: {\"outcome\": \"<one of the four values>\", \"notes\": \"<1 sentence summary>\"}",
+              "type": "HumanMessagePromptTemplate"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b8_llm",
+      "name": "Claude Haiku \u2014 Classifier",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1340,
+        780
+      ],
+      "parameters": {
+        "model": "claude-haiku-4-5-20251001",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "credentials": {
+        "anthropicApi": {
+          "id": "[FILL_IN: Anthropic API credential ID]",
+          "name": "MXAI - Anthropic"
+        }
+      }
+    },
+    {
+      "id": "b8_parser",
+      "name": "Outcome Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1560,
+        780
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"outcome\": \"answered_interested\", \"notes\": \"Prospect asked about pricing and wants to see the math.\"}"
+      }
+    },
+    {
+      "id": "b9",
+      "name": "Route by Call Outcome",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1560,
+        640
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "rules": [
+            {
+              "outputKey": "interested",
+              "conditions": {
+                "options": {},
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.outcome }}",
+                    "rightValue": "answered_interested",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "declined",
+              "conditions": {
+                "options": {},
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.outcome }}",
+                    "rightValue": "answered_declined",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      }
+    },
+    {
+      "id": "b10",
+      "name": "Update \u2014 Warm Lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1780,
+        560
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "mode": "id",
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY"
+        },
+        "sheetName": {
+          "mode": "id",
+          "value": "0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "call_1_outcome": "answered_interested",
+            "call_1_date": "={{ $now.format('yyyy-MM-dd') }}",
+            "call_notes": "={{ $json.output.notes }} | {{ $('Extract Call Data').item.json.call_summary }}",
+            "status": "warm"
+          },
+          "matchingColumns": [
+            "phone"
+          ],
+          "schema": [
+            {
+              "id": "call_1_outcome",
+              "displayName": "call_1_outcome",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_1_date",
+              "displayName": "call_1_date",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_notes",
+              "displayName": "call_notes",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": true,
+              "defaultMatch": true,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "MXAI - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "b11",
+      "name": "SMS \u2014 Booking Link",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        560
+      ],
+      "parameters": {
+        "operation": "send",
+        "from": "+12292527385",
+        "to": "={{ $('Extract Call Data').item.json.phone }}",
+        "message": "=Hi {{ $('Extract Call Data').item.json.first_name }}, Reggie Johnson here from MAXXAM AI. Great connecting! Book your free 20-min call: https://tinyurl.com/maxxam-call"
+      },
+      "credentials": {
+        "twilioApi": {
+          "id": "[FILL_IN: MXAI Twilio credential ID]",
+          "name": "MXAI - Twilio"
+        }
+      }
+    },
+    {
+      "id": "b12",
+      "name": "Update \u2014 Declined",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1780,
+        700
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "mode": "id",
+          "value": "11FmiYiSlNCpcf0Costl0QftilPyxMIl3Ce7OA9XiGhY"
+        },
+        "sheetName": {
+          "mode": "id",
+          "value": "0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "call_1_outcome": "answered_declined",
+            "call_1_date": "={{ $now.format('yyyy-MM-dd') }}",
+            "call_notes": "={{ $json.output.notes }}",
+            "status": "cold_call_declined"
+          },
+          "matchingColumns": [
+            "phone"
+          ],
+          "schema": [
+            {
+              "id": "call_1_outcome",
+              "displayName": "call_1_outcome",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_1_date",
+              "displayName": "call_1_date",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "call_notes",
+              "displayName": "call_notes",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": true,
+              "defaultMatch": true,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Q144RZRFCkewBJK4",
+          "name": "MXAI - Google Sheets"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Mon-Fri 10am": {
+      "main": [
+        [
+          {
+            "node": "Read Prospect Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Prospect Sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter Callable Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Callable Prospects": {
+      "main": [
+        [
+          {
+            "node": "Daily Cap 8 Calls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Cap 8 Calls": {
+      "main": [
+        [
+          {
+            "node": "One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One at a Time": {
+      "main": [
+        [
+          {
+            "node": "Fire Retell Call",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Fire Retell Call": {
+      "main": [
+        [
+          {
+            "node": "Mark as Calling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Calling": {
+      "main": [
+        [
+          {
+            "node": "One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retell Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Call Ended",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Call Ended": {
+      "main": [
+        [
+          {
+            "node": "Extract Call Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Extract Call Data": {
+      "main": [
+        [
+          {
+            "node": "Normalize Outcome Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Outcome Type": {
+      "main": [
+        [
+          {
+            "node": "Route by Outcome Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Outcome Type": {
+      "main": [
+        [
+          {
+            "node": "Update \u2014 Voicemail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update \u2014 No Answer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classify Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update \u2014 Voicemail": {
+      "main": [
+        [
+          {
+            "node": "Has Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email 1 \u2014 Voicemail Follow-Up",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Classify Transcript": {
+      "main": [
+        [
+          {
+            "node": "Route by Call Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Haiku \u2014 Classifier": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Classify Transcript",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outcome Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Classify Transcript",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Call Outcome": {
+      "main": [
+        [
+          {
+            "node": "Update \u2014 Warm Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update \u2014 Declined",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Update \u2014 Warm Lead": {
+      "main": [
+        [
+          {
+            "node": "SMS \u2014 Booking Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateId": "maxxam-voice-outreach-v1",
+    "instanceId": "maxxam-ai"
+  },
+  "_SETUP_REQUIRED": {
+    "Fire Retell Call": [
+      "Replace [FILL_IN: RETELL_API_KEY] in Authorization header",
+      "Replace [FILL_IN: MAXXAM prospecting phone number] with Retell-registered number",
+      "Replace [FILL_IN: Retell agent_id from dashboard] with actual agent_id"
+    ],
+    "Claude Haiku \u2014 Classifier": [
+      "Replace [FILL_IN: Anthropic API credential ID] with n8n credential ID",
+      "Update credential name to match your n8n Anthropic credential"
+    ],
+    "Send Email 1 \u2014 Voicemail Follow-Up": [
+      "Replace [FILL_IN: MXAI Gmail credential ID] with n8n credential ID",
+      "Update credential name to match your n8n Gmail credential"
+    ],
+    "SMS \u2014 Booking Link": [
+      "Replace [FILL_IN: MXAI Twilio credential ID] with n8n credential ID",
+      "Confirm from number +12292527385 is the correct MAXXAM AI Twilio number"
+    ]
+  }
+}

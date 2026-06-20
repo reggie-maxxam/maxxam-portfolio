@@ -1,0 +1,291 @@
+{
+  "name": "MAXXAM AI \u2014 Content Generator (Topic to LinkedIn Draft)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## MAXXAM AI \u2014 Content Generator\n\n**Purpose:** Generate a LinkedIn post draft from a topic and save to Google Sheet.\n\n**ONE-TIME SETUP (after import):**\n1. Click **Claude Model** node \u2192 Credential dropdown \u2192 select **MXAI - Anthropic**\n   - If not listed: create new Anthropic credential, name it exactly `MXAI - Anthropic`, paste sk-ant- key\n2. Click **Write Draft to Sheet** node \u2192 replace `1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE` with your actual Sheet ID\n   - Find Sheet ID in the URL: docs.google.com/spreadsheets/d/**THIS_PART**/edit\n\n**To Test:** Click **Test workflow** \u2014 uses pre-filled healthcare topic in Test Data node\n\n**Troubleshooting:**\n- Claude Model error \u2192 verify MXAI - Anthropic credential has a valid sk-ant- key\n- Sheet error \u2192 confirm Sheet ID is correct and tab is named exactly `Content_Calendar`\n- Credential test shows red but workflow runs \u2192 known n8n bug; the workflow still works",
+        "width": 520,
+        "height": 320,
+        "color": 5
+      },
+      "id": "b1c2d3e4-f5a6-4890-b1c2-d3e4f5a67801",
+      "name": "Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "topic",
+              "value": "How therapy practices can recover lost revenue from no-shows"
+            },
+            {
+              "name": "pillar",
+              "value": "3"
+            },
+            {
+              "name": "content_type",
+              "value": "text"
+            },
+            {
+              "name": "scheduled_date",
+              "value": "2026-03-21"
+            },
+            {
+              "name": "context",
+              "value": "Healthcare automation - 90-day priority vertical"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f6a7b8c9-d0e1-4345-f6a7-b8c9d0e12302",
+      "name": "Test Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        240,
+        160
+      ],
+      "notes": "Click Test workflow to run with this data. Edit topic/pillar/scheduled_date to test different posts."
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "maxxam-generate-content",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a7b8c9d0-e1f2-4456-a7b8-c9d0e1f23403",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Normalize Input stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "b8c9d0e1-f2a3-4567-b8c9-d0e1f2a34504",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        260
+      ],
+      "notes": "Handles both Test Data (flat) and Webhook (body object). Outputs flat fields for the prompt."
+    },
+    {
+      "parameters": {
+        "prompt": "=You are a content writer for MAXXAM AI, a Fractional AI Leadership and automation consultancy run by Reginald Johnson.\n\nBrand voice: Professional but approachable. Educational without being condescending. Data-driven with specific metrics. Honest about challenges. Confident but not arrogant.\n\nTagline: Strategic AI Automation - Fractional AI Leadership - Built to Scale\n\nIdeal customer: Service business owners (35-55, $250K-$500K revenue) overwhelmed by manual processes who want to automate without adding headcount.\n\nWrite a LinkedIn post for the following:\nTopic: {{ $json.topic }}\nPillar: {{ $json.pillar }}\nContent type: {{ $json.content_type }}\nContext: {{ $json.context }}\n\nReturn ONLY valid JSON. No markdown code fences. No extra text before or after:\n{\n  \"hook\": \"Opening line that stops the scroll (max 2 lines)\",\n  \"body\": \"Full post body with \\n for line breaks. Max 1500 chars. Include specific numbers or examples.\",\n  \"cta\": \"Single clear call to action\",\n  \"hashtags\": \"3-5 relevant hashtags as a single string\"\n}"
+      },
+      "id": "c9d0e1f2-a3b4-4678-c9d0-e1f2a3b45605",
+      "name": "Generate LinkedIn Post",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        680,
+        260
+      ],
+      "notes": "Basic LLM Chain. Claude Model sub-node connects via ai_languageModel port below."
+    },
+    {
+      "parameters": {
+        "model": "claude-sonnet-4-6",
+        "options": {
+          "temperature": 0.7,
+          "maxTokensToSample": 1024
+        }
+      },
+      "id": "d0e1f2a3-b4c5-4789-d0e1-f2a3b4c56706",
+      "name": "Claude Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        680,
+        460
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "",
+          "name": "MXAI - Anthropic"
+        }
+      },
+      "notes": "SETUP REQUIRED: Open node and select MXAI - Anthropic from the Credential dropdown."
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Parse & Format Row stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "e1f2a3b4-c5d6-4890-e1f2-a3b4c5d67807",
+      "name": "Parse & Format Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        260
+      ],
+      "notes": "Extracts JSON from Claude response. Falls back gracefully if Claude returns non-JSON. Builds full Content_Calendar row."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Content_Calendar",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "f2a3b4c5-d6e7-4901-f2a3-b4c5d6e78908",
+      "name": "Write Draft to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        260
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dQbDlkXclK7YGOPI",
+          "name": "MXAI - Google"
+        }
+      },
+      "notes": "SETUP REQUIRED: Replace 1kUfK-wGp_cauo2jApFdm7cj863W7iBYZR9A3qLmx4kE. Tab must be named Content_Calendar."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, id: $('Parse & Format Row').first().json.id, message: 'Draft saved. Review in Google Sheet and set status to approved before posting.' }) }}"
+      },
+      "id": "a3b4c5d6-e7f8-4012-a3b4-c5d6e7f89009",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1340,
+        260
+      ],
+      "notes": "Returns success response to webhook caller. Silently skipped when running via Test Data."
+    }
+  ],
+  "connections": {
+    "Test Data": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Generate LinkedIn Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate LinkedIn Post",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate LinkedIn Post": {
+      "main": [
+        [
+          {
+            "node": "Parse & Format Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Format Row": {
+      "main": [
+        [
+          {
+            "node": "Write Draft to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Draft to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": [
+    "maxxam-ai",
+    "social-media",
+    "linkedin",
+    "content"
+  ],
+  "meta": {
+    "instanceId": "maxxam-ai",
+    "createdWith": "MAXXAM AI n8n-workflow-builder v2",
+    "creationDate": "2026-03-21",
+    "templateCredsSetupCompleted": false
+  }
+}
