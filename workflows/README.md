@@ -52,6 +52,7 @@ Code nodes are redacted. Import into n8n to see the full visual graph — all no
 |------|---------------------|-----------|
 | [PE-01-Central-Activity-Logger-SHOWCASE.json](showcase/operations/PE-01-Central-Activity-Logger-SHOWCASE.json) | Central activity hub — normalizes events from all automation sources into one log | Webhook · Code · Sheets |
 | [maxxam-content-performance-report-SHOWCASE.json](showcase/operations/maxxam-content-performance-report-SHOWCASE.json) | Weekly analytics pipeline — reads content calendar, calculates engagement deltas, emails report | Sheets · Code · Gmail |
+| [CEO-Weekly-Dashboard-SHOWCASE.json](showcase/operations/CEO-Weekly-Dashboard-SHOWCASE.json) | CEO operations dashboard — parallel data pulls across all segments → KPI scoring → email + Slack digest | Schedule · Sheets · Code · Gmail · Slack |
 
 ### Content & Marketing
 | File | What It Demonstrates | Key Nodes |
@@ -127,6 +128,14 @@ Live canvas screenshots from the production n8n instance. Architecture shown —
 <img src="../assets/screenshots/smart-waitlist.png" width="100%" alt="Waitlist System"/><br/>
 <sub><b>Waitlist System</b><br/>Cal.com → slot polling → SMS notification</sub>
 </td>
+</tr>
+<tr>
+<td align="center" width="33%">
+<img src="../assets/screenshots/ceo-dashboard.png" width="100%" alt="CEO Operations Dashboard"/><br/>
+<sub><b>CEO Operations Dashboard</b><br/>4 data sources → KPI scoring → email + Slack digest</sub>
+</td>
+<td width="33%"></td>
+<td width="33%"></td>
 </tr>
 </table>
 

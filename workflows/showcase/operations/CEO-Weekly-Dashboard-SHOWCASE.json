@@ -1,0 +1,228 @@
+{
+  "name": "CEO Weekly Operations Dashboard",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## CEO Weekly Operations Dashboard\n\nWeekly report delivered every Monday at 7 AM. Aggregates live data across all operational segments and routes a formatted digest to the CEO inbox, team Slack, and a running dashboard log.",
+        "height": 160,
+        "width": 500,
+        "color": 7
+      },
+      "id": "sticky-title",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-160, -100]
+    },
+    {
+      "parameters": {
+        "content": "**Data Collection**\nParallel reads from live ops sheets",
+        "height": 80,
+        "width": 200,
+        "color": 4
+      },
+      "id": "sticky-data",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [300, -100]
+    },
+    {
+      "parameters": {
+        "content": "**Report Engine**\nAggregate, score, format HTML",
+        "height": 80,
+        "width": 200,
+        "color": 4
+      },
+      "id": "sticky-engine",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [680, -100]
+    },
+    {
+      "parameters": {
+        "content": "**Multi-Channel Delivery**\nEmail + Slack + dashboard log",
+        "height": 80,
+        "width": 220,
+        "color": 4
+      },
+      "id": "sticky-delivery",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1060, -100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [1],
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Every Monday 7 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "{{ UNITS_SHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Units", "mode": "name" },
+        "options": {}
+      },
+      "id": "node-units",
+      "name": "Fetch Units & Occupancy",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [300, 60]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "{{ WAITLIST_SHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Waitlist", "mode": "name" },
+        "options": {}
+      },
+      "id": "node-waitlist",
+      "name": "Fetch Waitlist & Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [300, 220]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "{{ FINANCIALS_SHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Revenue", "mode": "name" },
+        "options": {}
+      },
+      "id": "node-financials",
+      "name": "Fetch Revenue & Financials",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [300, 380]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "{{ OPS_SHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Operations", "mode": "name" },
+        "options": {}
+      },
+      "id": "node-ops",
+      "name": "Fetch Operations Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [300, 540]
+    },
+    {
+      "parameters": {
+        "mode": "combineBySql",
+        "numberInputs": 4,
+        "query": "SELECT * FROM t1"
+      },
+      "id": "node-merge",
+      "name": "Merge All Segments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── MAXXAM AI — Redacted Implementation ─────────────────────────\n//\n// Purpose: Aggregate segment data, calculate KPIs, flag threshold alerts\n// Inputs:  Units[], Waitlist[], Revenue[], Operations[]\n// Outputs: occupancyRate, waitlistDepth, revenueVsBudget, alertFlags[], weekLabel\n//\n// Full implementation available to MAXXAM AI clients.\n// → Book a discovery call: https://tinyurl.com/maxxam-call\n// ────────────────────────────────────────────────────────────────\n\nreturn { json: {} };"
+      },
+      "id": "node-kpis",
+      "name": "Calculate KPIs & Flags",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── MAXXAM AI — Redacted Implementation ─────────────────────────\n//\n// Purpose: Render branded HTML dashboard email with color-coded status indicators\n// Inputs:  KPI object, alertFlags[], weekLabel\n// Outputs: htmlBody, slackBlocks[], subjectLine\n//\n// Full implementation available to MAXXAM AI clients.\n// → Book a discovery call: https://tinyurl.com/maxxam-call\n// ────────────────────────────────────────────────────────────────\n\nreturn { json: {} };"
+      },
+      "id": "node-report",
+      "name": "Format Dashboard Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.ceoEmail }}",
+        "subject": "={{ $json.subjectLine }}",
+        "emailType": "html",
+        "message": "={{ $json.htmlBody }}",
+        "options": {}
+      },
+      "id": "node-email",
+      "name": "Send CEO Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1240, 140]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "resource": "message",
+        "channel": "={{ $json.slackChannel }}",
+        "otherOptions": {}
+      },
+      "id": "node-slack",
+      "name": "Post Slack Digest",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "{{ DASHBOARD_LOG_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Weekly Log", "mode": "name" },
+        "columns": { "mappingMode": "autoMapInputData", "value": {} },
+        "options": {}
+      },
+      "id": "node-log",
+      "name": "Log to Dashboard History",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1240, 460]
+    }
+  ],
+  "connections": {
+    "Every Monday 7 AM": {
+      "main": [[
+        { "node": "Fetch Units & Occupancy", "type": "main", "index": 0 },
+        { "node": "Fetch Waitlist & Leads", "type": "main", "index": 0 },
+        { "node": "Fetch Revenue & Financials", "type": "main", "index": 0 },
+        { "node": "Fetch Operations Status", "type": "main", "index": 0 }
+      ]]
+    },
+    "Fetch Units & Occupancy": { "main": [[{ "node": "Merge All Segments", "type": "main", "index": 0 }]] },
+    "Fetch Waitlist & Leads":  { "main": [[{ "node": "Merge All Segments", "type": "main", "index": 1 }]] },
+    "Fetch Revenue & Financials": { "main": [[{ "node": "Merge All Segments", "type": "main", "index": 2 }]] },
+    "Fetch Operations Status": { "main": [[{ "node": "Merge All Segments", "type": "main", "index": 3 }]] },
+    "Merge All Segments":      { "main": [[{ "node": "Calculate KPIs & Flags", "type": "main", "index": 0 }]] },
+    "Calculate KPIs & Flags":  { "main": [[{ "node": "Format Dashboard Report", "type": "main", "index": 0 }]] },
+    "Format Dashboard Report": {
+      "main": [[
+        { "node": "Send CEO Email", "type": "main", "index": 0 },
+        { "node": "Post Slack Digest", "type": "main", "index": 0 },
+        { "node": "Log to Dashboard History", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": []
+}
