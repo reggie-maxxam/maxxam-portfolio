@@ -1,0 +1,17 @@
+# Credentials — never commit
+.env
+*.env.*
+.env.local
+.env.production
+credentials.json
+token.json
+service-account.json
+*_CREDENTIALS*
+*_SECRETS*
+*_credentials*
+*_secrets*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini

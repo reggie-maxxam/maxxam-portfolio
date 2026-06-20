@@ -1,0 +1,727 @@
+{
+  "name": "PE-01: Central Activity Logger",
+  "nodes": [
+    {
+      "id": "sticky-overview-001",
+      "name": "Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        -100
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 500,
+        "height": 380,
+        "content": "## \ud83c\udfaf PE-01: Central Activity Logger\n### Performance Engine Foundation\n\n**Purpose:** Receive webhooks from ALL automations and store activity data.\n\n**What this does:**\n1. Receives POST webhooks from all system workflows\n2. Validates required fields (client_id, system_number, action_type)\n3. Looks up client benchmarks from Clients sheet\n4. Calculates estimated value based on action type\n5. Enriches data with timestamps and system names\n6. Stores activity in Activity_Log sheet\n7. Triggers daily summary update\n\n**Endpoint:** `/webhook/maxxam-activity-log`\n\n**After Import - You Must:**\n1. Connect Google Sheets credentials\n2. Paste your Sheet URL in both Google Sheets nodes\n3. Update the webhook URL in 'Trigger Daily Summary' node\n\n**MAXXAM AI | Food Truck Implementation**\n**Version:** 1.1 | **Created:** 2026-01-03"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-webhook-001",
+      "name": "Webhook Setup Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -50,
+        -50
+      ],
+      "parameters": {
+        "color": 6,
+        "width": 280,
+        "height": 120,
+        "content": "### \ud83d\udce5 Step 1: Webhook Trigger\n\nAll system workflows POST to this endpoint.\n\n**URL:** Your n8n URL + `/webhook/maxxam-activity-log`"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "webhook-trigger-001",
+      "name": "Activity Log Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        100
+      ],
+      "webhookId": "maxxam-activity-log",
+      "parameters": {
+        "path": "maxxam-activity-log",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "responseCode": 200,
+        "responseData": "allEntries",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-validate-001",
+      "name": "Validation Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        200,
+        -50
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 280,
+        "height": 120,
+        "content": "### \u2705 Step 2: Validate Payload\n\nChecks for required fields:\n- `client_id` (required)\n- `system_number` (0-9)\n- `action_type` (required)"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "validate-payload-001",
+      "name": "Validate Required Fields",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "check-client-id",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              },
+              "leftValue": "={{ $json.body?.client_id || $json.client_id || '' }}",
+              "rightValue": ""
+            },
+            {
+              "id": "check-action-type",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              },
+              "leftValue": "={{ $json.body?.action_type || $json.action_type || '' }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-error-001",
+      "name": "Error Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "color": 1,
+        "width": 250,
+        "height": 100,
+        "content": "### \u274c Validation Failed\n\nReturns error response if required fields are missing."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "validation-error-001",
+      "name": "Set Validation Error",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        250,
+        350
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-status",
+              "name": "status",
+              "type": "string",
+              "value": "error"
+            },
+            {
+              "id": "error-message",
+              "name": "message",
+              "type": "string",
+              "value": "Missing required fields: client_id or action_type"
+            },
+            {
+              "id": "error-received",
+              "name": "received",
+              "type": "string",
+              "value": "={{ JSON.stringify($json.body || $json) }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "sticky-normalize-001",
+      "name": "Normalize Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        450,
+        -50
+      ],
+      "parameters": {
+        "color": 5,
+        "width": 280,
+        "height": 120,
+        "content": "### \ud83d\udccb Step 3: Normalize Data\n\nExtracts and normalizes payload data, handles both nested (body.field) and flat (field) structures."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "normalize-data-001",
+      "name": "Normalize Input Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        500,
+        100
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Normalize Input Data stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-lookup-001",
+      "name": "Client Lookup Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        700,
+        -50
+      ],
+      "parameters": {
+        "color": 2,
+        "width": 280,
+        "height": 140,
+        "content": "### \ud83d\udd0d Step 4: Lookup Client\n\nFetches client benchmarks from the Clients sheet.\n\n**Required columns:**\n- client_id, client_name\n- avg_order_value, avg_catering_value\n- Various conversion rates"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "lookup-client-001",
+      "name": "Lookup Client Benchmarks",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        750,
+        100
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ YOUR_GOOGLE_SHEET_URL }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Clients"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "client_id",
+              "lookupValue": "={{ $json.client_id }}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "generalFormatting": "values"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "your-google-sheets-credential-id",
+          "name": "Google Sheets Account"
+        }
+      },
+      "typeVersion": 4.5
+    },
+    {
+      "id": "sticky-defaults-001",
+      "name": "Defaults Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        950,
+        -50
+      ],
+      "parameters": {
+        "color": 3,
+        "width": 280,
+        "height": 120,
+        "content": "### \ud83d\udcca Step 5: Apply Defaults\n\nMerges client benchmarks with defaults for missing values. Ensures all value calculations have necessary data."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "merge-with-defaults-001",
+      "name": "Merge Client Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1000,
+        100
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Merge Client Data stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-calculate-001",
+      "name": "Value Calculation Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1200,
+        -100
+      ],
+      "parameters": {
+        "color": 5,
+        "width": 350,
+        "height": 220,
+        "content": "### \ud83d\udcb0 Step 6: Calculate Value\n\n**Value Types:**\n- `captured_revenue` - Actual recorded revenue\n- `estimated_revenue` - Projected value\n- `pipeline_value` - Future potential\n- `time_saved` - Hours \u00d7 rate\n- `cost_avoided` - Prevented losses\n- `recovered_revenue` - Win-back value\n\n**Key Actions:**\n- order_taken, quote_accepted\n- call_answered, lead_captured\n- review_received, post_published\n- reactivation_converted"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "calculate-value-001",
+      "name": "Calculate Activity Value",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1250,
+        100
+      ],
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Calculate Activity Value stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "sticky-store-001",
+      "name": "Store Activity Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1500,
+        -50
+      ],
+      "parameters": {
+        "color": 2,
+        "width": 320,
+        "height": 140,
+        "content": "### \ud83d\udcbe Step 7: Store Activity\n\nAppends enriched activity record to the Activity_Log sheet.\n\n**Key columns logged:**\nTimestamp, Client, System, Action, Value, Type, Status, Details"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "store-activity-001",
+      "name": "Store in Activity Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1550,
+        100
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ YOUR_GOOGLE_SHEET_URL }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Activity_Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "client_id": "={{ $json.client_id }}",
+            "client_name": "={{ $json.client_name }}",
+            "system_number": "={{ $json.system_number }}",
+            "system_name": "={{ $json.system_name }}",
+            "automation_name": "={{ $json.automation_name }}",
+            "action_type": "={{ $json.action_type }}",
+            "action_detail": "={{ $json.action_detail }}",
+            "quantity": "={{ $json.quantity }}",
+            "estimated_value": "={{ $json.estimated_value }}",
+            "value_type": "={{ $json.value_type }}",
+            "conversion_status": "={{ $json.conversion_status }}",
+            "source_platform": "={{ $json.source_platform }}",
+            "reference_id": "={{ $json.reference_id }}",
+            "metadata": "={{ JSON.stringify($json.metadata) }}",
+            "calculation_method": "={{ $json.calculation_method }}",
+            "received_at": "={{ $json.received_at }}"
+          },
+          "schema": [
+            {
+              "id": "timestamp",
+              "type": "string",
+              "displayName": "timestamp"
+            },
+            {
+              "id": "client_id",
+              "type": "string",
+              "displayName": "client_id"
+            },
+            {
+              "id": "client_name",
+              "type": "string",
+              "displayName": "client_name"
+            },
+            {
+              "id": "system_number",
+              "type": "string",
+              "displayName": "system_number"
+            },
+            {
+              "id": "system_name",
+              "type": "string",
+              "displayName": "system_name"
+            },
+            {
+              "id": "automation_name",
+              "type": "string",
+              "displayName": "automation_name"
+            },
+            {
+              "id": "action_type",
+              "type": "string",
+              "displayName": "action_type"
+            },
+            {
+              "id": "action_detail",
+              "type": "string",
+              "displayName": "action_detail"
+            },
+            {
+              "id": "quantity",
+              "type": "string",
+              "displayName": "quantity"
+            },
+            {
+              "id": "estimated_value",
+              "type": "string",
+              "displayName": "estimated_value"
+            },
+            {
+              "id": "value_type",
+              "type": "string",
+              "displayName": "value_type"
+            },
+            {
+              "id": "conversion_status",
+              "type": "string",
+              "displayName": "conversion_status"
+            },
+            {
+              "id": "source_platform",
+              "type": "string",
+              "displayName": "source_platform"
+            },
+            {
+              "id": "reference_id",
+              "type": "string",
+              "displayName": "reference_id"
+            },
+            {
+              "id": "metadata",
+              "type": "string",
+              "displayName": "metadata"
+            },
+            {
+              "id": "calculation_method",
+              "type": "string",
+              "displayName": "calculation_method"
+            },
+            {
+              "id": "received_at",
+              "type": "string",
+              "displayName": "received_at"
+            }
+          ]
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "your-google-sheets-credential-id",
+          "name": "Google Sheets Account"
+        }
+      },
+      "typeVersion": 4.5
+    },
+    {
+      "id": "sticky-trigger-summary-001",
+      "name": "Trigger Summary Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1800,
+        -50
+      ],
+      "parameters": {
+        "color": 3,
+        "width": 280,
+        "height": 120,
+        "content": "### \ud83d\udd04 Step 8: Trigger Summary\n\nOptionally calls PE-02 to update daily summaries in real-time.\n\n*Can be disabled for batch processing*"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "trigger-summary-001",
+      "name": "Trigger Daily Summary Update",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1850,
+        100
+      ],
+      "parameters": {
+        "url": "https://YOUR_N8N_URL/webhook/maxxam-daily-summary-update",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_id }}"
+            },
+            {
+              "name": "date",
+              "value": "={{ $json.timestamp.split('T')[0] }}"
+            },
+            {
+              "name": "trigger_source",
+              "value": "PE-01 Activity Logger"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000,
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "continueOnFail": true,
+      "typeVersion": 4.2
+    },
+    {
+      "id": "sticky-success-001",
+      "name": "Success Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2100,
+        -50
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 280,
+        "height": 120,
+        "content": "### \u2705 Step 9: Success Response\n\nReturns confirmation with logged data summary for debugging and verification."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "success-response-001",
+      "name": "Prepare Success Response",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2150,
+        100
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "type": "string",
+              "value": "success"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "type": "string",
+              "value": "Activity logged successfully"
+            },
+            {
+              "id": "logged-data",
+              "name": "logged",
+              "type": "object",
+              "value": "={{ { client_id: $('Calculate Activity Value').first().json.client_id, action_type: $('Calculate Activity Value').first().json.action_type, estimated_value: $('Calculate Activity Value').first().json.estimated_value, value_type: $('Calculate Activity Value').first().json.value_type, timestamp: $('Calculate Activity Value').first().json.timestamp } }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "sticky-setup-001",
+      "name": "Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        300
+      ],
+      "parameters": {
+        "color": 6,
+        "width": 500,
+        "height": 350,
+        "content": "## \ud83d\udccb Setup Instructions\n\n### 1. Create Google Sheet\nCreate a new Google Sheet named: **MAXXAM Performance Engine**\n\n### 2. Create Required Sheets (tabs)\n\n**Tab 1: Activity_Log** - Rename Sheet1 to this\nIn Row 1, add these column headers:\n`timestamp, client_id, client_name, system_number, system_name, automation_name, action_type, action_detail, quantity, estimated_value, value_type, conversion_status, source_platform, reference_id, metadata, calculation_method, received_at`\n\n**Tab 2: Clients** - Click + to add new tab\nIn Row 1, add these column headers:\n`client_id, client_name, avg_order_value, avg_catering_value, missed_call_lost_sale_rate, sms_response_to_sale_rate, catering_close_rate, qualified_lead_value, hourly_rate, review_value_5star, review_value_4star, review_value_other, active`\n\n### 3. After Import - Configure Nodes\n\n**For BOTH Google Sheets nodes:**\n1. Click on the node\n2. Click 'Credential to connect with' \u2192 Select or create Google Sheets OAuth2\n3. In 'Document' field \u2192 Select 'By URL'\n4. Paste your Google Sheet URL\n5. The Sheet name should auto-populate\n\n### 4. Copy Your Sheet URL\nIt looks like: `https://docs.google.com/spreadsheets/d/1ABC123xyz/edit`"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-test-001",
+      "name": "Test Payload",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        680
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 500,
+        "height": 280,
+        "content": "## \ud83e\uddea Test Payload\n\nUse this sample payload to test the webhook:\n\n```json\n{\n  \"client_id\": \"lafamilia\",\n  \"system_number\": 3,\n  \"automation_name\": \"S3-01 Goodcall Order Processor\",\n  \"action_type\": \"order_taken\",\n  \"action_detail\": \"Phone order via Goodcall AI\",\n  \"quantity\": 1,\n  \"source_platform\": \"goodcall\",\n  \"metadata\": {\n    \"order_total\": 45.50,\n    \"items\": [\"Taco Platter\", \"Horchata\"],\n    \"customer_phone\": \"+1555123456\"\n  }\n}\n```\n\n**Expected Result:** Logs activity with estimated_value = 45.50 (from metadata.order_total)"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Activity Log Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Required Fields": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input Data": {
+      "main": [
+        [
+          {
+            "node": "Lookup Client Benchmarks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Client Benchmarks": {
+      "main": [
+        [
+          {
+            "node": "Merge Client Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Client Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Activity Value",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Activity Value": {
+      "main": [
+        [
+          {
+            "node": "Store in Activity Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Activity Log": {
+      "main": [
+        [
+          {
+            "node": "Trigger Daily Summary Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Daily Summary Update": {
+      "main": [
+        [
+          {
+            "node": "Prepare Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "versionId": "pe-01-central-activity-logger-v1-20260103",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "maxxam-pe-01-activity-logger"
+  },
+  "tags": [
+    {
+      "name": "Performance Engine"
+    },
+    {
+      "name": "Foundation"
+    },
+    {
+      "name": "Food Truck"
+    },
+    {
+      "name": "MAXXAM AI"
+    }
+  ]
+}

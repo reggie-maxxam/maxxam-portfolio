@@ -1,0 +1,313 @@
+{
+  "name": "Airbnb Burnout Analyzer - Manual Test",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger-id",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "width": 400,
+        "height": 400,
+        "color": 7,
+        "content": "# \ud83c\udfe0 Airbnb Burnout Analyzer - Test Mode\n\n## How to Test\n1. **Click the Manual Trigger** to start\n2. **Modify the Set Node** with your test data:\n   - Add real Airbnb URLs\n   - Set location and timeframe\n3. **Run the workflow**\n4. **Check the final results**\n\n## Test URLs\nReplace with real Airbnb listing URLs:\n- https://www.airbnb.com/rooms/[LISTING_ID]\n- https://www.airbnb.com/rooms/[LISTING_ID]\n\n**Once working, we'll add chat/webhook triggers!**"
+      },
+      "id": "instructions-id",
+      "name": "Test Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "test-data",
+              "name": "testData",
+              "type": "object",
+              "value": "={\n  \"urls\": [\n    \"https://www.airbnb.com/rooms/53733382\",\n    \"https://www.airbnb.com/rooms/45871546\"\n  ],\n  \"location\": \"Austin, TX\",\n  \"timeframe\": \"6 months\"\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "test-data-id",
+      "name": "Test Data Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "process-urls-id",
+      "name": "Process Each URL",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "current-url",
+              "name": "currentUrl",
+              "type": "string",
+              "value": "={{ $json.testData.urls[$('Process Each URL').context.currentRunIndex] }}"
+            },
+            {
+              "id": "analysis-context",
+              "name": "analysisContext",
+              "type": "object",
+              "value": "={{ $json.testData }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-current-url-id",
+      "name": "Extract Current URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.firecrawl.dev/v1/scrape",
+        "sendQuery": false,
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $credentials.httpHeaderAuth.headerValue }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.currentUrl }}"
+            },
+            {
+              "name": "formats",
+              "value": "[\"markdown\"]"
+            },
+            {
+              "name": "onlyMainContent",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "scrape-airbnb-id",
+      "name": "Scrape Airbnb Listing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        920,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "firecrawl-api-key",
+          "name": "Firecrawl API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Extract Listing Data stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "extract-listing-data-id",
+      "name": "Extract Listing Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Calculate Burnout Scores stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "calculate-burnout-scores-id",
+      "name": "Calculate Burnout Scores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "aggregateItems",
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "aggregate-all-results-id",
+      "name": "Aggregate All Results",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 3,
+      "position": [
+        1520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Generate Final Report stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
+      },
+      "id": "generate-final-report-id",
+      "name": "Generate Final Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "width": 400,
+        "height": 500,
+        "color": 6,
+        "content": "# \ud83d\udcca Analysis Results Structure\n\n## Summary Report\n- **Total Properties**: Count analyzed\n- **Risk Distribution**: High/Medium/Low percentages\n- **Average Scores**: Overall, Guest Satisfaction, Operational, Listing Quality\n- **Market Insights**: Benchmarks and averages\n\n## Individual Properties\n- **Burnout Risk Level**: High/Medium/Low\n- **Detailed Scores**: Breakdown by category (1-10)\n- **Specific Recommendations**: Actionable improvements\n- **Risk Factors**: Issues identified\n- **Key Metrics**: Rating, reviews, response data\n\n## Investment Insights\n- **High Opportunity**: Burned-out hosts with good ratings\n- **Quick Wins**: Medium risk with fixable issues\n- **Stable Properties**: Well-managed, low risk\n\n**Perfect for real estate investors and property managers!**"
+      },
+      "id": "results-structure-id",
+      "name": "Results Structure",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1720,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Test Data Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Each URL": {
+      "main": [
+        [
+          {
+            "node": "Extract Current URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate All Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Current URL": {
+      "main": [
+        [
+          {
+            "node": "Scrape Airbnb Listing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Airbnb Listing": {
+      "main": [
+        [
+          {
+            "node": "Extract Listing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Listing Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Burnout Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Burnout Scores": {
+      "main": [
+        [
+          {
+            "node": "Process Each URL",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Aggregate All Results": {
+      "main": [
+        [
+          {
+            "node": "Generate Final Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
