@@ -80,6 +80,11 @@ Code nodes are redacted. Import into n8n to see the full visual graph — all no
 |------|---------------------|-----------|
 | [airbnb-burnout-detector-SHOWCASE.json](showcase/real-estate/airbnb-burnout-detector-SHOWCASE.json) | Airbnb host burnout assessment — chat interface with ML-style risk scoring | Webhook · Code · Switch |
 
+### Nonprofit
+| File | What It Demonstrates | Key Nodes |
+|------|---------------------|-----------|
+| [Grant-Pipeline-SHOWCASE.json](showcase/nonprofit/Grant-Pipeline-SHOWCASE.json) | Grant pipeline automation — funder alignment scoring (6 dimensions) → 3-path routing → narrative brief generation → deadline tracking + Slack alerts | Webhook · Code · Switch · Gmail · Sheets · Slack |
+
 ---
 
 ## Workflow Previews
@@ -134,7 +139,10 @@ Live canvas screenshots from the production n8n instance. Architecture shown —
 <img src="../assets/screenshots/ceo-dashboard.png" width="100%" alt="CEO Operations Dashboard"/><br/>
 <sub><b>CEO Operations Dashboard</b><br/>4 data sources → KPI scoring → email + Slack digest</sub>
 </td>
-<td width="33%"></td>
+<td align="center" width="33%">
+<img src="../assets/screenshots/grant-pipeline.png" width="100%" alt="Grant Pipeline Automation"/><br/>
+<sub><b>Grant Pipeline Automation</b><br/>Funder scoring → 3-path routing → narrative brief → deadline alerts</sub>
+</td>
 <td width="33%"></td>
 </tr>
 </table>
