@@ -17,3 +17,6 @@ Thumbs.db
 desktop.ini
 # Internal tooling — not for public distribution
 tools/
+
+# Screenshots containing client-identifiable canvas content — website use only
+assets/screenshots-local-only/
