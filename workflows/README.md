@@ -81,6 +81,57 @@ Code nodes are redacted. Import into n8n to see the full visual graph — all no
 
 ---
 
+## Workflow Previews
+
+Live canvas screenshots from the production n8n instance. Architecture shown — Code node logic protected.
+
+<table>
+<tr>
+<td align="center" width="33%">
+<img src="../assets/screenshots/quiz-funnel.png" width="100%" alt="Lead Scoring Funnel"/><br/>
+<sub><b>Lead Scoring Funnel</b><br/>Quiz → tier routing → email sequences</sub>
+</td>
+<td align="center" width="33%">
+<img src="../assets/screenshots/content-performance-report.png" width="100%" alt="Analytics Pipeline"/><br/>
+<sub><b>Analytics Pipeline</b><br/>Sheets → metrics → weekly email report</sub>
+</td>
+<td align="center" width="33%">
+<img src="../assets/screenshots/reddit-scraper.png" width="100%" alt="Lead Intelligence"/><br/>
+<sub><b>Lead Intelligence</b><br/>7 subreddits × 30+ keywords → scored leads</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="33%">
+<img src="../assets/screenshots/newsletter-signup.png" width="100%" alt="Subscriber Intake"/><br/>
+<sub><b>Subscriber Intake</b><br/>Webhook → dedup → list sync</sub>
+</td>
+<td align="center" width="33%">
+<img src="../assets/screenshots/newsletter-hub.png" width="100%" alt="Publication Hub"/><br/>
+<sub><b>Publication Hub</b><br/>Subscriber tier routing → send sequences</sub>
+</td>
+<td align="center" width="33%">
+<img src="../assets/screenshots/sheet-writer.png" width="100%" alt="Content Calendar Sync"/><br/>
+<sub><b>Content Calendar Sync</b><br/>Webhook → structured rows → Google Sheets</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="33%">
+<img src="../assets/screenshots/linkedin-poster.png" width="100%" alt="Social Publishing"/><br/>
+<sub><b>Social Publishing</b><br/>Content calendar → LinkedIn post via OAuth2</sub>
+</td>
+<td align="center" width="33%">
+<img src="../assets/screenshots/airbnb-burnout.png" width="100%" alt="Risk Scoring"/><br/>
+<sub><b>Risk Scoring</b><br/>Chat interface → ML-style burnout assessment</sub>
+</td>
+<td align="center" width="33%">
+<img src="../assets/screenshots/smart-waitlist.png" width="100%" alt="Waitlist System"/><br/>
+<sub><b>Waitlist System</b><br/>Cal.com → slot polling → SMS notification</sub>
+</td>
+</tr>
+</table>
+
+---
+
 ## Want the Full Implementations?
 
 Full workflows — with production Code node logic, AI prompts, error handling, and multi-workflow orchestration — are delivered to MAXXAM AI clients as part of an engagement.
