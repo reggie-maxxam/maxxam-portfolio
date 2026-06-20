@@ -73,7 +73,7 @@ This loop is how the framework improves over time. Rate limits, timing quirks, A
 
 ## Applied Example: Healthcare Follow-Up System
 
-**Workflow SOP** (`workflows/sscw-follow-up.md`):
+**Workflow SOP** (`workflows/healthcare-appointment-followup.md`):
 - Trigger: New appointment booked via Cal.com
 - Step 1: Send confirmation email (Gmail)
 - Step 2: Schedule SMS at T-72h, T-24h, T-2h (Twilio)

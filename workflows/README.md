@@ -44,7 +44,7 @@ Code nodes are redacted. Import into n8n to see the full visual graph — all no
 ### Healthcare
 | File | What It Demonstrates | Key Nodes |
 |------|---------------------|-----------|
-| [SSCW-Healthcare-Followup-SHOWCASE.json](showcase/healthcare/SSCW-Healthcare-Followup-SHOWCASE.json) | Appointment event routing — new booking / cancellation / no-show handling | Webhook · Switch · Gmail · Twilio · Sheets |
+| [Healthcare-Appointment-Followup-SHOWCASE.json](showcase/healthcare/Healthcare-Appointment-Followup-SHOWCASE.json) | Appointment event routing — new booking / cancellation / no-show handling | Webhook · Switch · Gmail · Twilio · Sheets |
 | [MAXXAM-AI-Quiz-Funnel-SHOWCASE.json](showcase/healthcare/MAXXAM-AI-Quiz-Funnel-SHOWCASE.json) | Lead scoring funnel — quiz submission → tier routing → tiered email sequences | Webhook · Code · Switch · Gmail · Sheets |
 
 ### Operations

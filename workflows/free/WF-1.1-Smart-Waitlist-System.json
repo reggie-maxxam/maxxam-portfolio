@@ -58,19 +58,19 @@
               "id": "set-004",
               "name": "bookingBaseUrl",
               "type": "string",
-              "value": "https://cal.com/serenity-seekers"
+              "value": "{{ YOUR_CAL_COM_URL }}"
             },
             {
               "id": "set-005",
               "name": "practiceName",
               "type": "string",
-              "value": "Serenity Seekers Counseling & Wellness"
+              "value": "{{ YOUR_PRACTICE_NAME }}"
             },
             {
               "id": "set-006",
               "name": "alertEmail",
               "type": "string",
-              "value": "justin@serenityseekers.com"
+              "value": "{{ YOUR_ADMIN_EMAIL }}"
             },
             {
               "id": "set-007",
@@ -600,7 +600,7 @@
     },
     {
       "parameters": {
-        "content": "## WF-1.1 Smart Waitlist System | Serenity Seekers\n**MAXXAM AI** | Phase 1: Practice Quick Wins\n\n**What it does:** Polls Google Calendar every 15 minutes, detects cancellations by comparing against a stored snapshot, ranks waitlisted clients by priority/preference/wait time, and sends SMS via Twilio to fill the open slot.\n\n**Impact:** Fill 70%+ of cancelled appointment slots automatically.",
+        "content": "## WF-1.1 Smart Waitlist System | Healthcare Practice\n**MAXXAM AI** | Phase 1: Practice Quick Wins\n\n**What it does:** Polls Google Calendar every 15 minutes, detects cancellations by comparing against a stored snapshot, ranks waitlisted clients by priority/preference/wait time, and sends SMS via Twilio to fill the open slot.\n\n**Impact:** Fill 70%+ of cancelled appointment slots automatically.",
         "height": 220,
         "width": 660,
         "color": 4
@@ -695,7 +695,7 @@
     },
     {
       "parameters": {
-        "content": "## Error Fallback\nIf SMS send fails, email alert goes to Justin with slot details and candidate info for manual follow-up.",
+        "content": "## Error Fallback\nIf SMS send fails, email alert goes to practice admin with slot details and candidate info for manual follow-up.",
         "height": 120,
         "width": 300,
         "color": 2
@@ -932,7 +932,7 @@
       "updatedAt": "2026-02-14T23:55:35.892Z",
       "createdAt": "2026-02-14T23:55:35.892Z",
       "id": "eWY6PpZsDeI9qidS",
-      "name": "Serenity Seekers"
+      "name": "Healthcare Practice"
     },
     {
       "updatedAt": "2026-02-14T23:55:35.901Z",

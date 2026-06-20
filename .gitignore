@@ -15,3 +15,5 @@ service-account.json
 .DS_Store
 Thumbs.db
 desktop.ini
+# Internal tooling — not for public distribution
+tools/

@@ -291,7 +291,7 @@
         "color": 5,
         "width": 350,
         "height": 220,
-        "content": "### \ud83d\udcb0 Step 6: Calculate Value\n\n**Value Types:**\n- `captured_revenue` - Actual recorded revenue\n- `estimated_revenue` - Projected value\n- `pipeline_value` - Future potential\n- `time_saved` - Hours \u00d7 rate\n- `cost_avoided` - Prevented losses\n- `recovered_revenue` - Win-back value\n\n**Key Actions:**\n- order_taken, quote_accepted\n- call_answered, lead_captured\n- review_received, post_published\n- reactivation_converted"
+        "content": "### \ud83d\udcb0 Step 6: Calculate Value\n\n**Value Types:**\n- `captured_revenue` - Actual recorded revenue\n- `estimated_revenue` - Projected value\n- `pipeline_value` - Future potential\n- `time_saved` - Hours \u00d7 rate\n- `cost_avoided` - Prevented losses\n- `recovered_revenue` - Win-back value\n\n**Key Actions:**\n- order_received, quote_accepted\n- call_answered, lead_captured\n- review_received, post_published\n- reactivation_converted"
       },
       "typeVersion": 1
     },
@@ -596,7 +596,7 @@
         "color": 7,
         "width": 500,
         "height": 280,
-        "content": "## \ud83e\uddea Test Payload\n\nUse this sample payload to test the webhook:\n\n```json\n{\n  \"client_id\": \"lafamilia\",\n  \"system_number\": 3,\n  \"automation_name\": \"S3-01 Goodcall Order Processor\",\n  \"action_type\": \"order_taken\",\n  \"action_detail\": \"Phone order via Goodcall AI\",\n  \"quantity\": 1,\n  \"source_platform\": \"goodcall\",\n  \"metadata\": {\n    \"order_total\": 45.50,\n    \"items\": [\"Taco Platter\", \"Horchata\"],\n    \"customer_phone\": \"+1555123456\"\n  }\n}\n```\n\n**Expected Result:** Logs activity with estimated_value = 45.50 (from metadata.order_total)"
+        "content": "## \ud83e\uddea Test Payload\n\nUse this sample payload to test the webhook:\n\n```json\n{\n  \"client_id\": \"food-bev-client\",\n  \"system_number\": 3,\n  \"automation_name\": \"System 3 - Order Processor\",\n  \"action_type\": \"order_received\",\n  \"action_detail\": \"Phone order via Goodcall AI\",\n  \"quantity\": 1,\n  \"source_platform\": \"goodcall\",\n  \"metadata\": {\n    \"order_total\": 45.50,\n    \"items\": [\"Product Item A\", \"Product Item B\"],\n    \"customer_phone\": \"+1555123456\"\n  }\n}\n```\n\n**Expected Result:** Logs activity with estimated_value = 45.50 (from metadata.order_total)"
       },
       "typeVersion": 1
     }
