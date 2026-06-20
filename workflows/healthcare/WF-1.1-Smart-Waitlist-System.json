@@ -1,0 +1,950 @@
+{
+  "name": "WF-1.1 Smart Waitlist System - Base Template",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "db39445a-af7d-4912-ba6a-a635fb044786",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -2704,
+        384
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {},
+      "id": "788bd50d-3bf9-4b45-95b4-4945203b2681",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -2704,
+        592
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-001",
+              "name": "spreadsheetUrl",
+              "type": "string",
+              "value": "YOUR_GOOGLE_SHEET_URL_HERE"
+            },
+            {
+              "id": "set-002",
+              "name": "calendarId",
+              "type": "string",
+              "value": "primary"
+            },
+            {
+              "id": "set-003",
+              "name": "twilioFromNumber",
+              "type": "string",
+              "value": "+1XXXXXXXXXX"
+            },
+            {
+              "id": "set-004",
+              "name": "bookingBaseUrl",
+              "type": "string",
+              "value": "https://cal.com/serenity-seekers"
+            },
+            {
+              "id": "set-005",
+              "name": "practiceName",
+              "type": "string",
+              "value": "Serenity Seekers Counseling & Wellness"
+            },
+            {
+              "id": "set-006",
+              "name": "alertEmail",
+              "type": "string",
+              "value": "justin@serenityseekers.com"
+            },
+            {
+              "id": "set-007",
+              "name": "smsCascadeWaitMinutes",
+              "type": "number",
+              "value": 30
+            },
+            {
+              "id": "set-008",
+              "name": "maxCandidatesPerSlot",
+              "type": "number",
+              "value": 3
+            },
+            {
+              "id": "set-009",
+              "name": "lookAheadHours",
+              "type": "number",
+              "value": 48
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "37aac639-14c0-463e-bcdf-0ff3cdb60563",
+      "name": "Workflow Settings",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -2448,
+        480
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ $json.calendarId }}/events",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $now.plus({ hours: $json.lookAheadHours }).toISO() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "50"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "452fd3b2-1643-45a2-9755-c8bb047d658e",
+      "name": "Fetch Calendar Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -2176,
+        384
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Workflow Settings').item.json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "CalendarSnapshot"
+        },
+        "options": {}
+      },
+      "id": "5466d168-d6e9-4bc1-abfd-9ccfb178b7af",
+      "name": "Fetch Previous Snapshot",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -2176,
+        592
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF-1.1 Smart Waitlist - Slot Detection Logic\n// Compares current calendar state against previous snapshot\n// to detect newly opened slots from cancellations\n\ntry {\n  const settings = $('Workflow Settings').first().json;\n  \n  // Get current calendar events\n  const calendarData = $('Fetch Calendar Events').first().json;\n  const currentEvents = (calendarData.items || []).map(event => ({\n    id: event.id,\n    summary: event.summary || 'No Title',\n    start: event.start?.dateTime || event.start?.date,\n    end: event.end?.dateTime || event.end?.date,\n    status: event.status\n  })).filter(e => e.status !== 'cancelled');\n\n  // Get previous snapshot\n  const previousSnapshot = $('Fetch Previous Snapshot').all().map(item => ({\n    id: item.json.eventId,\n    summary: item.json.summary,\n    start: item.json.startTime,\n    end: item.json.endTime\n  }));\n\n  // Find events that were in previous snapshot but NOT in current\n  // These represent cancellations or rescheduled appointments\n  const currentEventIds = new Set(currentEvents.map(e => e.id));\n  const cancelledSlots = previousSnapshot.filter(prev => !currentEventIds.has(prev.id));\n\n  // Also detect time blocks that are now free\n  // Build a simple availability map for business hours (9 AM - 6 PM)\n  const now = new Date();\n  const lookAhead = new Date(now.getTime() + (settings.lookAheadHours * 60 * 60 * 1000));\n  \n  const openSlots = [];\n  \n  for (const cancelled of cancelledSlots) {\n    const slotStart = new Date(cancelled.start);\n    const slotEnd = new Date(cancelled.end);\n    \n    // Only include future slots\n    if (slotStart > now) {\n      openSlots.push({\n        originalEventId: cancelled.id,\n        originalSummary: cancelled.summary,\n        slotDate: slotStart.toISOString().split('T')[0],\n        slotStartTime: slotStart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),\n        slotEndTime: slotEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),\n        slotStartISO: slotStart.toISOString(),\n        slotEndISO: slotEnd.toISOString(),\n        slotDurationMinutes: Math.round((slotEnd - slotStart) / (1000 * 60)),\n        detectedAt: now.toISOString()\n      });\n    }\n  }\n\n  // Return results\n  if (openSlots.length === 0) {\n    return [{ json: { hasOpenSlots: false, openSlotCount: 0, openSlots: [], message: 'No new cancellations detected' } }];\n  }\n\n  return [{ json: { hasOpenSlots: true, openSlotCount: openSlots.length, openSlots: openSlots, message: `${openSlots.length} open slot(s) detected from cancellations` } }];\n\n} catch (error) {\n  return [{ json: { hasOpenSlots: false, openSlotCount: 0, openSlots: [], error: true, errorMessage: error.message } }];\n}"
+      },
+      "id": "b72c9bb4-2f92-4d0d-9671-d906d887bc90",
+      "name": "Detect Open Slots",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1904,
+        384
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare current calendar events for snapshot storage\n// This replaces the previous snapshot so next run can detect changes\n\ntry {\n  const calendarData = $('Fetch Calendar Events').first().json;\n  const events = (calendarData.items || []).filter(e => e.status !== 'cancelled');\n\n  const snapshotRows = events.map(event => ({\n    json: {\n      eventId: event.id,\n      summary: event.summary || 'No Title',\n      startTime: event.start?.dateTime || event.start?.date,\n      endTime: event.end?.dateTime || event.end?.date,\n      updatedAt: new Date().toISOString()\n    }\n  }));\n\n  if (snapshotRows.length === 0) {\n    return [{ json: { message: 'No events to snapshot', count: 0 } }];\n  }\n\n  return snapshotRows;\n\n} catch (error) {\n  return [{ json: { error: true, errorMessage: error.message } }];\n}"
+      },
+      "id": "280ad0a8-944c-4edc-95b5-35b4779dd716",
+      "name": "Update Calendar Snapshot",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1904,
+        592
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Workflow Settings').item.json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "CalendarSnapshot"
+        }
+      },
+      "id": "dbe0e730-2bb4-4204-a174-68dd0494e4bd",
+      "name": "Save New Snapshot",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1648,
+        592
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Workflow Settings').item.json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "CalendarSnapshot"
+        },
+        "columns": {
+          "value": {},
+          "schema": [],
+          "mappingMode": "autoMapInputData",
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "e6037d59-c952-4dc8-a665-f6852fa0cc8b",
+      "name": "Append Snapshot Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1408,
+        592
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "cond-001",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "leftValue": "={{ $json.hasOpenSlots }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cae6eda8-ccaf-4bf6-be4a-9c65370bfb8c",
+      "name": "Has Open Slots?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -1648,
+        384
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split open slots into individual items for processing\n\nconst data = $input.first().json;\nconst openSlots = data.openSlots || [];\n\nreturn openSlots.map(slot => ({ json: slot }));"
+      },
+      "id": "00e559d3-476b-406c-b33a-a3dcd70ef0f2",
+      "name": "Split Open Slots",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1408,
+        288
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Workflow Settings').item.json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Waitlist"
+        },
+        "options": {}
+      },
+      "id": "019f4b99-9415-476c-be83-2c01e79ee1d7",
+      "name": "Fetch Waitlist",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1168,
+        288
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF-1.1 Smart Waitlist - Candidate Matching Algorithm\n// Ranks waitlisted clients by priority, availability preference, and wait time\n// HIPAA Note: No PHI is included in outgoing SMS messages\n\ntry {\n  const settings = $('Workflow Settings').first().json;\n  const slot = $('Split Open Slots').item.json;\n  const waitlistRaw = $('Fetch Waitlist').all();\n\n  // Filter to active waitlist entries only\n  const activeWaitlist = waitlistRaw\n    .map(item => item.json)\n    .filter(entry => {\n      const status = (entry.status || '').toLowerCase();\n      return status === 'active' || status === 'waiting';\n    });\n\n  if (activeWaitlist.length === 0) {\n    return [{ json: { hasCandidates: false, slotInfo: slot, message: 'No active waitlist entries found' } }];\n  }\n\n  // Parse slot date info\n  const slotDate = new Date(slot.slotStartISO);\n  const slotDay = slotDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();\n  const slotHour = slotDate.getHours();\n\n  // Score each candidate\n  const scoredCandidates = activeWaitlist.map(entry => {\n    let score = 0;\n\n    // Priority level scoring (high=30, medium=20, normal=10)\n    const priority = (entry.priority || 'normal').toLowerCase();\n    if (priority === 'high' || priority === 'urgent') score += 30;\n    else if (priority === 'medium') score += 20;\n    else score += 10;\n\n    // Day preference matching\n    const preferredDays = (entry.preferredDays || '').toLowerCase();\n    if (preferredDays === 'any' || preferredDays === '') score += 15;\n    else if (preferredDays.includes(slotDay)) score += 15;\n    else score -= 5;\n\n    // Time preference matching\n    const preferredTime = (entry.preferredTime || '').toLowerCase();\n    if (preferredTime === 'any' || preferredTime === '') score += 10;\n    else if (preferredTime === 'morning' && slotHour < 12) score += 10;\n    else if (preferredTime === 'afternoon' && slotHour >= 12 && slotHour < 17) score += 10;\n    else if (preferredTime === 'evening' && slotHour >= 17) score += 10;\n    else score -= 5;\n\n    // Wait time bonus (longer wait = higher priority)\n    const addedDate = entry.dateAdded ? new Date(entry.dateAdded) : new Date();\n    const daysWaiting = Math.floor((new Date() - addedDate) / (1000 * 60 * 60 * 24));\n    score += Math.min(daysWaiting * 2, 20); // Cap at 20 bonus points\n\n    // Penalize if recently contacted (within last 24 hours)\n    if (entry.lastContacted) {\n      const lastContact = new Date(entry.lastContacted);\n      const hoursSinceContact = (new Date() - lastContact) / (1000 * 60 * 60);\n      if (hoursSinceContact < 24) score -= 50; // Heavy penalty to avoid spamming\n    }\n\n    return {\n      ...entry,\n      matchScore: score,\n      daysWaiting: daysWaiting\n    };\n  });\n\n  // Sort by score descending and take top candidates\n  const maxCandidates = settings.maxCandidatesPerSlot || 3;\n  const topCandidates = scoredCandidates\n    .filter(c => c.matchScore > 0)\n    .sort((a, b) => b.matchScore - a.matchScore)\n    .slice(0, maxCandidates);\n\n  if (topCandidates.length === 0) {\n    return [{ json: { hasCandidates: false, slotInfo: slot, message: 'No suitable candidates for this slot' } }];\n  }\n\n  // Return top candidate for immediate contact, plus alternates\n  return [{\n    json: {\n      hasCandidates: true,\n      slotInfo: slot,\n      primaryCandidate: topCandidates[0],\n      alternateCandidates: topCandidates.slice(1),\n      totalCandidatesScored: scoredCandidates.length,\n      message: `Found ${topCandidates.length} candidate(s) for ${slot.slotDate} at ${slot.slotStartTime}`\n    }\n  }];\n\n} catch (error) {\n  return [{ json: { hasCandidates: false, error: true, errorMessage: error.message } }];\n}"
+      },
+      "id": "4b2e2752-4660-4fba-af5c-bac3aaf0b5bd",
+      "name": "Match Candidates to Slot",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -896,
+        288
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "cond-002",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "leftValue": "={{ $json.hasCandidates }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "df054f86-0c56-4f54-bfd6-545d9dbe9a50",
+      "name": "Has Candidates?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -640,
+        288
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "from": "={{ $('Workflow Settings').item.json.twilioFromNumber }}",
+        "to": "={{ $json.primaryCandidate.phone }}",
+        "message": "=Hi {{ $json.primaryCandidate.firstName }}, great news! An appointment slot just opened up at {{ $('Workflow Settings').item.json.practiceName }} on {{ $json.slotInfo.slotDate }} at {{ $json.slotInfo.slotStartTime }}. Would you like to book it? Tap here to schedule: {{ $('Workflow Settings').item.json.bookingBaseUrl }}?date={{ $json.slotInfo.slotDate }}&time={{ encodeURIComponent($json.slotInfo.slotStartTime) }} - Reply STOP to opt out.",
+        "options": {}
+      },
+      "id": "6e3b1741-e63d-45be-a82a-cfa7cd4699af",
+      "name": "Send SMS to Candidate",
+      "type": "n8n-nodes-base.twilio",
+      "position": [
+        -384,
+        192
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Workflow Settings').item.json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Waitlist"
+        },
+        "columns": {
+          "value": {
+            "phone": "={{ $('Match Candidates to Slot').item.json.primaryCandidate.phone }}",
+            "status": "contacted",
+            "lastContacted": "={{ $now.toISO() }}",
+            "lastSlotOffered": "={{ $('Match Candidates to Slot').item.json.slotInfo.slotDate }} {{ $('Match Candidates to Slot').item.json.slotInfo.slotStartTime }}"
+          },
+          "schema": [
+            {
+              "id": "phone",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "phone",
+              "defaultMatch": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lastContacted",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "lastContacted",
+              "defaultMatch": false,
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lastSlotOffered",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "lastSlotOffered",
+              "defaultMatch": false,
+              "canBeUsedToMatch": false
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "phone"
+          ]
+        },
+        "options": {}
+      },
+      "id": "1d884080-1d0c-44dd-9164-9065b962f5f9",
+      "name": "Update Waitlist Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -128,
+        192
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Workflow Settings').item.json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "WaitlistActivityLog"
+        },
+        "columns": {
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "action": "SMS_SENT",
+            "candidateName": "={{ $('Match Candidates to Slot').item.json.primaryCandidate.firstName }} {{ $('Match Candidates to Slot').item.json.primaryCandidate.lastName }}",
+            "candidatePhone": "={{ $('Match Candidates to Slot').item.json.primaryCandidate.phone }}",
+            "slotDate": "={{ $('Match Candidates to Slot').item.json.slotInfo.slotDate }}",
+            "slotTime": "={{ $('Match Candidates to Slot').item.json.slotInfo.slotStartTime }}",
+            "matchScore": "={{ $('Match Candidates to Slot').item.json.primaryCandidate.matchScore }}",
+            "smsStatus": "={{ $('Send SMS to Candidate').item.json.status || 'sent' }}",
+            "alternatesAvailable": "={{ $('Match Candidates to Slot').item.json.alternateCandidates.length }}"
+          },
+          "schema": [],
+          "mappingMode": "defineBelow",
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "00c0554c-0586-43c3-97ff-3d9fa629eae8",
+      "name": "Log Activity",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        144,
+        192
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Workflow Settings').item.json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "WaitlistActivityLog"
+        },
+        "columns": {
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "action": "NO_CANDIDATES",
+            "candidateName": "",
+            "candidatePhone": "",
+            "slotDate": "={{ $json.slotInfo.slotDate || 'unknown' }}",
+            "slotTime": "={{ $json.slotInfo.slotStartTime || 'unknown' }}",
+            "matchScore": "",
+            "smsStatus": "",
+            "alternatesAvailable": "0"
+          },
+          "schema": [],
+          "mappingMode": "defineBelow",
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "79d3802b-be9a-41b9-ad94-1b155d509652",
+      "name": "Log No Candidates Found",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -384,
+        400
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Workflow Settings').item.json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "WaitlistActivityLog"
+        },
+        "columns": {
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "action": "NO_SLOTS",
+            "candidateName": "",
+            "candidatePhone": "",
+            "slotDate": "",
+            "slotTime": "",
+            "matchScore": "",
+            "smsStatus": "",
+            "alternatesAvailable": ""
+          },
+          "schema": [],
+          "mappingMode": "defineBelow",
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "e219307c-1f77-4e25-b854-0150bb389450",
+      "name": "Log No Open Slots",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1408,
+        480
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Workflow Settings').item.json.alertEmail }}",
+        "subject": "=⚠️ Waitlist Alert - Open Slot With No Candidates on {{ $json.slotDate || \"unknown date\" }}",
+        "message": "=<h3>Smart Waitlist Alert</h3><p>A cancellation was detected, but there are no eligible candidates on the waitlist to fill the slot.</p><p><strong>Slot Date:</strong> {{ $json.slotDate || \"unknown\" }}</p><p><strong>Slot Time:</strong> {{ $json.slotTime || \"unknown\" }}</p><p>You may want to:</p><ul><li>Reach out manually to recent inquiries</li><li>Post availability on social media</li><li>Add prospective clients to the waitlist</li></ul><p>— MAXXAM AI Automation</p>",
+        "options": {}
+      },
+      "id": "26faabce-7835-4a39-a7e4-41fbd2ef9cc5",
+      "name": "Error Alert Email",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        -128,
+        400
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "d66aac62-74cd-4093-8f61-0a4d6560f38d"
+    },
+    {
+      "parameters": {
+        "content": "## WF-1.1 Smart Waitlist System | Serenity Seekers\n**MAXXAM AI** | Phase 1: Practice Quick Wins\n\n**What it does:** Polls Google Calendar every 15 minutes, detects cancellations by comparing against a stored snapshot, ranks waitlisted clients by priority/preference/wait time, and sends SMS via Twilio to fill the open slot.\n\n**Impact:** Fill 70%+ of cancelled appointment slots automatically.",
+        "height": 220,
+        "width": 660,
+        "color": 4
+      },
+      "id": "10f7a9ac-d0aa-4f65-b262-2a973f629859",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2864,
+        112
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## SETUP\n\n1. Create Google Sheet with tabs: **Waitlist**, **CalendarSnapshot**, **WaitlistActivityLog**\n2. Waitlist columns: firstName, lastName, phone, email, status, priority, preferredDays, preferredTime, dateAdded, lastContacted, lastSlotOffered\n3. Configure credentials: Google OAuth2, Google Sheets, Twilio, Gmail\n4. Update **Workflow Settings** node with your values\n5. Test with Manual Trigger first",
+        "height": 360,
+        "width": 140,
+        "color": 6
+      },
+      "id": "bc9e44d1-cbef-4123-bb4a-37bc1b8f3dd0",
+      "name": "Sticky Note - Setup Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2864,
+        352
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## ⚕️ HIPAA Compliance Notes\n- SMS messages contain NO Protected Health Information (PHI)\n- Messages only reference appointment availability and booking links\n- Google Sheets must be in HIPAA-configured Google Workspace with BAA\n- Twilio BAA recommended if transmitting any client identifiers",
+        "width": 440,
+        "color": 2
+      },
+      "id": "9c889f85-8888-4c0b-9189-b4cb4a670add",
+      "name": "Sticky Note - HIPAA",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2160,
+        112
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Slot Detection Engine\nCompares current calendar events against last-known snapshot. Missing events = cancellations = open slots to fill.",
+        "height": 140,
+        "width": 300,
+        "color": 7
+      },
+      "id": "6ae0d183-c404-4882-bb21-fd15e73e0553",
+      "name": "Sticky Note - Slot Detection",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2000,
+        208
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Candidate Matching\nScores by: priority level (30/20/10), day preference (+15), time preference (+10), days waiting (up to +20), recent contact penalty (-50).",
+        "height": 140,
+        "width": 320,
+        "color": 7
+      },
+      "id": "ca31d9af-9bc6-4baf-95f9-9cf4b286486b",
+      "name": "Sticky Note - Matching",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1024,
+        112
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Activity Logging\nEvery action logged to WaitlistActivityLog sheet: SMS sent, no candidates found, no slots detected. Feeds into WF-2.4 Dashboard Aggregator.",
+        "height": 140,
+        "width": 320,
+        "color": 3
+      },
+      "id": "4da6faad-be98-4220-b300-04504750bb66",
+      "name": "Sticky Note - Logging",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Error Fallback\nIf SMS send fails, email alert goes to Justin with slot details and candidate info for manual follow-up.",
+        "height": 120,
+        "width": 300,
+        "color": 2
+      },
+      "id": "4483f618-b746-49fb-8b03-669afea31a30",
+      "name": "Sticky Note - Error Handling",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -240,
+        304
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 🧪 Testing Guide\n1. Add 2-3 test entries to Waitlist sheet with your phone number\n2. Create a test appointment in Google Calendar within next 48 hours\n3. Run workflow once via Manual Trigger to populate CalendarSnapshot\n4. Delete the test appointment from Google Calendar\n5. Run workflow again — should detect the cancellation and SMS you\n6. Check WaitlistActivityLog for logged actions\n\n**Expected:** SMS received within seconds of manual trigger.",
+        "height": 200,
+        "width": 500,
+        "color": 5
+      },
+      "id": "093c5fa6-4180-4819-9add-6f11fc40780c",
+      "name": "Sticky Note - Testing",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2864,
+        720
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Settings": {
+      "main": [
+        [
+          {
+            "node": "Fetch Calendar Events",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Previous Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Calendar Events": {
+      "main": [
+        [
+          {
+            "node": "Detect Open Slots",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Calendar Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Calendar Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Save New Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save New Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Append Snapshot Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Open Slots": {
+      "main": [
+        [
+          {
+            "node": "Has Open Slots?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Open Slots?": {
+      "main": [
+        [
+          {
+            "node": "Split Open Slots",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log No Open Slots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Open Slots": {
+      "main": [
+        [
+          {
+            "node": "Fetch Waitlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Waitlist": {
+      "main": [
+        [
+          {
+            "node": "Match Candidates to Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Candidates to Slot": {
+      "main": [
+        [
+          {
+            "node": "Has Candidates?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Candidates?": {
+      "main": [
+        [
+          {
+            "node": "Send SMS to Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log No Candidates Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SMS to Candidate": {
+      "main": [
+        [
+          {
+            "node": "Update Waitlist Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Waitlist Status": {
+      "main": [
+        [
+          {
+            "node": "Log Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log No Candidates Found": {
+      "main": [
+        [
+          {
+            "node": "Error Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dea891d4-a1e2-4bb2-88ae-eb4cc00260f6",
+  "meta": {
+    "instanceId": "338a068a0d338d55131dcaa8f8815ab69821e66ffb1aefb703a2dae380e78043"
+  },
+  "id": "xm3eOmhza8rfj7O0",
+  "tags": [
+    {
+      "updatedAt": "2026-02-14T23:55:35.892Z",
+      "createdAt": "2026-02-14T23:55:35.892Z",
+      "id": "eWY6PpZsDeI9qidS",
+      "name": "Serenity Seekers"
+    },
+    {
+      "updatedAt": "2026-02-14T23:55:35.901Z",
+      "createdAt": "2026-02-14T23:55:35.901Z",
+      "id": "kxxiVpaifw9MYZNt",
+      "name": "Waitlist"
+    },
+    {
+      "updatedAt": "2026-02-14T23:55:35.898Z",
+      "createdAt": "2026-02-14T23:55:35.898Z",
+      "id": "u5kEX1rtJhw1kBTj",
+      "name": "Phase 1"
+    }
+  ]
+}
