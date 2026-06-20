@@ -1,0 +1,365 @@
+{
+  "name": "Grant Pipeline Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Grant Pipeline Automation\n\nAutomates the full grant opportunity lifecycle — from new opportunity intake through funder alignment scoring, narrative brief generation, and deadline tracking. Only high-fit grants (score ≥ 7) enter the writing pipeline. Low-fit opportunities are filtered automatically, protecting the grant writer's time.",
+        "height": 140,
+        "width": 520,
+        "color": 7
+      },
+      "id": "sticky-title",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, -180]
+    },
+    {
+      "parameters": {
+        "content": "**Intake**\nCapture grant opportunity details via form submission or webhook",
+        "height": 90,
+        "width": 200,
+        "color": 4
+      },
+      "id": "sticky-intake",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, -160]
+    },
+    {
+      "parameters": {
+        "content": "**Scoring**\n6 dimensions · max score 10\nMission · Geography · Org Type · Track Record · Budget · Relationship",
+        "height": 100,
+        "width": 210,
+        "color": 4
+      },
+      "id": "sticky-scoring",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [360, -160]
+    },
+    {
+      "parameters": {
+        "content": "**Routing**\n≥ 7 → proceed · 5–6 → conditional review · < 5 → pass",
+        "height": 90,
+        "width": 200,
+        "color": 4
+      },
+      "id": "sticky-routing",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [600, -160]
+    },
+    {
+      "parameters": {
+        "content": "**Narrative Engine**\nGenerate 7-section brief from org boilerplate\nExec Summary · Needs · Program · Evaluation · Capacity · Budget · Sustainability",
+        "height": 100,
+        "width": 240,
+        "color": 4
+      },
+      "id": "sticky-narrative",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [840, -160]
+    },
+    {
+      "parameters": {
+        "content": "**Tracking & Alerts**\nLog to pipeline sheet · email brief to grant writer · Slack alert if deadline within 30 days",
+        "height": 100,
+        "width": 240,
+        "color": 4
+      },
+      "id": "sticky-tracking",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1200, -160]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "grant-intake",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "New Grant Opportunity",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "grant-intake-webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-funder",
+              "name": "funder_name",
+              "value": "={{ $json.body.funder_name }}",
+              "type": "string"
+            },
+            {
+              "id": "set-amount",
+              "name": "grant_amount",
+              "value": "={{ $json.body.grant_amount }}",
+              "type": "string"
+            },
+            {
+              "id": "set-deadline",
+              "name": "deadline",
+              "value": "={{ $json.body.deadline }}",
+              "type": "string"
+            },
+            {
+              "id": "set-focus",
+              "name": "focus_area",
+              "value": "={{ $json.body.focus_area }}",
+              "type": "string"
+            },
+            {
+              "id": "set-eligibility",
+              "name": "eligibility_notes",
+              "value": "={{ $json.body.eligibility_notes }}",
+              "type": "string"
+            },
+            {
+              "id": "set-program",
+              "name": "program_name",
+              "value": "={{ $json.body.program_name }}",
+              "type": "string"
+            },
+            {
+              "id": "set-population",
+              "name": "target_population",
+              "value": "={{ $json.body.target_population }}",
+              "type": "string"
+            },
+            {
+              "id": "set-outcomes",
+              "name": "expected_outcomes",
+              "value": "={{ $json.body.expected_outcomes }}",
+              "type": "string"
+            },
+            {
+              "id": "set-budget",
+              "name": "budget_range",
+              "value": "={{ $json.body.budget_range }}",
+              "type": "string"
+            },
+            {
+              "id": "set-relationship",
+              "name": "existing_relationship",
+              "value": "={{ $json.body.existing_relationship }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set",
+      "name": "Parse Grant Inputs",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── MAXXAM AI — Redacted Implementation ─────────────────────────\n//\n// Purpose: Funder alignment scoring — 6 dimensions, max score 10\n//\n// Dimension 1 — Mission Alignment (0–3)\n//   3: Direct match (health + arts/culture + faith engagement)\n//   2: Strong overlap (community health OR social determinants)\n//   1: Adjacent (general community development or youth)\n//   0: Poor match\n//\n// Dimension 2 — Geographic Eligibility (0–2)\n//   2: Local/regional match (metro, county, or state)\n//   1: National funder, eligible but not priority\n//   0: Outside scope\n//\n// Dimension 3 — Organization Type Eligibility (0–1)\n//   1: 501(c)(3) required or preferred — org qualifies\n//   0: Restricted to org types that exclude this org\n//\n// Dimension 4 — Track Record Alignment (0–2)\n//   2: Directly relevant prior work\n//   1: Partially relevant — related but not exact\n//   0: No relevant track record\n//\n// Dimension 5 — Budget Fit (0–1)\n//   1: Grant amount matches program cost within 30%\n//   0: Too small to deliver or too large to absorb credibly\n//\n// Dimension 6 — Existing Relationship (0–1)\n//   1: Prior contact with program officer or received prior funding\n//   0: Cold application\n//\n// Outputs: alignmentScore (0–10), recommendation (proceed/conditional/pass),\n//          scoreBreakdown{}, daysUntilDeadline\n//\n// Full implementation available to MAXXAM AI clients.\n// → Book a discovery call: https://tinyurl.com/maxxam-call\n// ────────────────────────────────────────────────────────────────\n\nreturn { json: {} };"
+      },
+      "id": "node-scoring",
+      "name": "Funder Alignment Scoring",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.recommendation }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "pass",
+              "output": 0
+            },
+            {
+              "value2": "conditional",
+              "output": 1
+            },
+            {
+              "value2": "proceed",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "id": "node-switch",
+      "name": "Route by Score",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.grantWriterEmail }}",
+        "subject": "Grant Pass: {{ $json.funder_name }} — Score {{ $json.alignmentScore }}/10",
+        "emailType": "html",
+        "message": "={{ $json.passNotificationHtml }}",
+        "options": {}
+      },
+      "id": "node-gmail-pass",
+      "name": "Notify — Not a Fit",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [880, 100]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.grantWriterEmail }}",
+        "subject": "Grant Review Needed: {{ $json.funder_name }} — Score {{ $json.alignmentScore }}/10",
+        "emailType": "html",
+        "message": "={{ $json.conditionalReviewHtml }}",
+        "options": {}
+      },
+      "id": "node-gmail-conditional",
+      "name": "Notify — Conditional Review",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── MAXXAM AI — Redacted Implementation ─────────────────────────\n//\n// Purpose: Generate structured first-draft narrative brief from org boilerplate\n//\n// Inputs: alignmentScore, scoreBreakdown, funder_name, focus_area,\n//         program_name, target_population, expected_outcomes, budget_range\n//\n// Output sections (7):\n//   1. Executive Summary — ask, problem, solution, impact, org positioning\n//   2. Needs / Problem Statement — local data, gap framing, funder language match\n//   3. Project Description — goals, SMART objectives, activities, timeline, partners\n//   4. Evaluation Plan — indicators, data sources, output vs. outcome distinction\n//   5. Organizational Capacity — from org boilerplate (verified data only)\n//   6. Budget Narrative — personnel, contractors, supplies, travel, indirect\n//   7. Sustainability Plan — revenue mix, partner continuation, post-grant plan\n//\n// Also outputs: narrativeBriefDocUrl (Google Doc), subjectLine, daysUntilDeadline\n//\n// Full implementation available to MAXXAM AI clients.\n// → Book a discovery call: https://tinyurl.com/maxxam-call\n// ────────────────────────────────────────────────────────────────\n\nreturn { json: {} };"
+      },
+      "id": "node-narrative",
+      "name": "Generate Narrative Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 500]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "{{ GRANT_LOG_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Grant Pipeline",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "node-sheets",
+      "name": "Log Grant Opportunity",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1100, 440]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.grantWriterEmail }}",
+        "subject": "={{ $json.subjectLine }}",
+        "emailType": "html",
+        "message": "={{ $json.briefingEmailHtml }}",
+        "options": {}
+      },
+      "id": "node-gmail-brief",
+      "name": "Send Briefing to Grant Writer",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1100, 580]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "deadline-check",
+              "leftValue": "={{ $json.daysUntilDeadline }}",
+              "rightValue": 30,
+              "operator": {
+                "type": "number",
+                "operation": "smallerEqual"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if",
+      "name": "Deadline Within 30 Days?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1320, 500]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "resource": "message",
+        "channel": "={{ $json.slackAlertsChannel }}",
+        "text": "={{ $json.slackAlertText }}",
+        "otherOptions": {}
+      },
+      "id": "node-slack",
+      "name": "Urgent Deadline Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1540, 420]
+    }
+  ],
+  "connections": {
+    "New Grant Opportunity": {
+      "main": [[{ "node": "Parse Grant Inputs", "type": "main", "index": 0 }]]
+    },
+    "Parse Grant Inputs": {
+      "main": [[{ "node": "Funder Alignment Scoring", "type": "main", "index": 0 }]]
+    },
+    "Funder Alignment Scoring": {
+      "main": [[{ "node": "Route by Score", "type": "main", "index": 0 }]]
+    },
+    "Route by Score": {
+      "main": [
+        [{ "node": "Notify — Not a Fit", "type": "main", "index": 0 }],
+        [{ "node": "Notify — Conditional Review", "type": "main", "index": 0 }],
+        [{ "node": "Generate Narrative Brief", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generate Narrative Brief": {
+      "main": [
+        [
+          { "node": "Log Grant Opportunity", "type": "main", "index": 0 },
+          { "node": "Send Briefing to Grant Writer", "type": "main", "index": 0 },
+          { "node": "Deadline Within 30 Days?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Deadline Within 30 Days?": {
+      "main": [
+        [{ "node": "Urgent Deadline Alert", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": []
+}
