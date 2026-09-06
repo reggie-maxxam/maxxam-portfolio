@@ -7,23 +7,30 @@
 
 ## What This Is
 
-A Streamlit dashboard that pulls real-world economic data from **FRED (Federal Reserve Economic Data)** — the same underlying data source used in Lesson 8's Figma-to-code exercise, rebuilt here in Python/Streamlit to stay consistent with [Project 01](../01-ecommerce-analytics-dashboard/).
+A Streamlit dashboard that pulls real-world economic data from **FRED (Federal Reserve Economic Data)** — the same underlying data source used in Lesson 8's Figma-to-code exercise, rebuilt here in Python/Streamlit to stay consistent with [Project 01](../01-ecommerce-analytics-dashboard/). Indicators are organized by category in a left sidebar (Key Indicators overview, Inflation, Employment, Interest Rates, Economic Growth, Exchange Rates, Housing, Consumer Spending), matching the layout of the lesson's reference app. Includes a dark mode toggle, same pattern as Project 01.
 
 | File | What it does |
 |------|----------------|
 | [`fred_client.py`](fred_client.py) | Fetches series from the live FRED API when a key is configured; falls back to clearly labeled synthetic demo data otherwise |
-| [`fred-dashboard.py`](fred-dashboard.py) | Streamlit UI — KPI cards and trend charts for each indicator |
+| [`fred-dashboard.py`](fred-dashboard.py) | Streamlit UI — sidebar category navigation, KPI cards, trend charts, dark mode toggle |
 
 ## What It Tracks
 
-Four key indicators, pulled by FRED series ID:
+Nine indicators across seven categories, pulled by FRED series ID:
 
-| Indicator | FRED Series ID |
-|-----------|-----------------|
-| Real GDP | `GDPC1` |
-| Unemployment Rate | `UNRATE` |
-| CPI (Inflation) | `CPIAUCSL` |
-| Federal Funds Rate | `FEDFUNDS` |
+| Category | Indicator | FRED Series ID |
+|----------|-----------|-----------------|
+| Economic Growth | Real GDP | `GDPC1` |
+| Employment | Unemployment Rate | `UNRATE` |
+| Inflation | CPI | `CPIAUCSL` |
+| Interest Rates | Federal Funds Rate | `FEDFUNDS` |
+| Interest Rates | 10-Year Treasury Yield | `DGS10` |
+| Interest Rates | 3-Month Treasury Rate | `TB3MS` |
+| Housing | Housing Starts | `HOUST` |
+| Exchange Rates | Trade-Weighted Dollar Index | `DTWEXBGS` |
+| Consumer Spending | Personal Consumption Expenditures | `PCE` |
+
+The "Key Indicators" overview shows one representative series per category; selecting a category in the sidebar shows all of that category's series in more detail.
 
 ## Running It
 
@@ -45,7 +52,7 @@ The dashboard runs immediately with synthetic demo data (clearly labeled on-scre
 
 ## Note on Testing
 
-The demo-mode path (synthetic data, UI, charts) has been run end-to-end and verified working. The live-mode FRED integration is written against the documented `fredapi` client but has not been exercised against a real API key — I don't hold one, and generating one requires signing up with a personal account, which isn't something to do on someone else's behalf. Add your key and give it a run; if the live path needs a fix, that's a quick follow-up.
+Both modes have been run end-to-end and verified: demo mode (synthetic data, UI, charts, sidebar navigation, dark mode) and live mode (real FRED API responses across all nine series, confirmed against a real key).
 
 ## Attribution
 
