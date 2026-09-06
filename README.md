@@ -39,6 +39,18 @@ See [workflows/README.md](workflows/README.md) for the full library with descrip
 
 ---
 
+## Technical Projects
+
+Personal skill-building work — Python, data analysis, and application development — kept separate from client case studies above.
+
+| # | Project | Stack | Demonstrates |
+|---|---------|-------|---------------|
+| [01](technical-projects/01-ecommerce-analytics-dashboard/) | E-commerce Analytics Dashboard | Python · Pandas · Jupyter · Streamlit | Notebook → reusable modules → interactive UI |
+
+See [technical-projects/README.md](technical-projects/README.md) for the full list.
+
+---
+
 ## The Framework
 
 All systems are built using the **WAT Architecture**:
