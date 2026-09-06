@@ -110,6 +110,10 @@ def get_theme_css(dark_mode: bool) -> str:
             color: {text} !important;
         }}
 
+        label[data-baseweb="checkbox"] > div:first-of-type {{
+            border: 1px solid {label} !important;
+        }}
+
         .stars {{
             color: #ffc107;
             font-size: 1.2rem;
