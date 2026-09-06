@@ -46,6 +46,7 @@ Personal skill-building work — Python, data analysis, and application developm
 | # | Project | Stack | Demonstrates |
 |---|---------|-------|---------------|
 | [01](technical-projects/01-ecommerce-analytics-dashboard/) | E-commerce Analytics Dashboard | Python · Pandas · Jupyter · Streamlit | Notebook → reusable modules → interactive UI |
+| [02](technical-projects/02-fred-key-indicators-dashboard/) | FRED Key Indicators Dashboard | Python · Pandas · Streamlit · FRED API | External API integration → live economic data |
 
 See [technical-projects/README.md](technical-projects/README.md) for the full list.
 
