@@ -5,6 +5,7 @@ Personal skill-building projects — distinct from the client engagements in [`c
 | # | Project | Stack | Demonstrates |
 |---|---------|-------|---------------|
 | [01](01-ecommerce-analytics-dashboard/) | E-commerce Analytics Dashboard | Python · Pandas · Jupyter · Streamlit | Notebook → reusable modules → interactive UI |
+| [02](02-fred-key-indicators-dashboard/) | FRED Key Indicators Dashboard | Python · Pandas · Streamlit · FRED API | External API integration → live economic data |
 
 ---
 
