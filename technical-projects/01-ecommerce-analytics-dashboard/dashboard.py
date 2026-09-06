@@ -26,76 +26,96 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for professional styling
-st.markdown("""
-<style>
-    .main > div {
-        padding-top: 2rem;
-    }
-    
-    .metric-card {
-        background: white;
-        padding: 1rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border: 1px solid #e0e0e0;
-        height: 120px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    
-    .metric-value {
-        font-size: 2rem;
-        font-weight: bold;
-        margin: 0;
-        color: #1f1f1f;
-    }
-    
-    .metric-label {
-        font-size: 0.9rem;
-        color: #666;
-        margin: 0;
-        margin-bottom: 0.5rem;
-    }
-    
-    .metric-trend {
-        font-size: 0.8rem;
-        margin: 0;
-    }
-    
-    .trend-positive {
-        color: #28a745;
-    }
-    
-    .trend-negative {
-        color: #dc3545;
-    }
-    
-    
-    .bottom-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border: 1px solid #e0e0e0;
-        height: 150px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        text-align: center;
-    }
-    
-    .stSelectbox > div > div > div {
-        background-color: white;
-    }
-    
-    .stars {
-        color: #ffc107;
-        font-size: 1.2rem;
-    }
-</style>
-""", unsafe_allow_html=True)
+def get_theme_css(dark_mode: bool) -> str:
+    """Custom CSS for professional styling, themed for light or dark mode"""
+    if dark_mode:
+        app_bg, card_bg, border, text, label = "#0e1117", "#1c1e26", "#3d4048", "#fafafa", "#aab0bb"
+    else:
+        app_bg, card_bg, border, text, label = "#ffffff", "white", "#e0e0e0", "#1f1f1f", "#666"
+
+    return f"""
+    <style>
+        .stApp {{
+            background-color: {app_bg};
+            color: {text};
+        }}
+
+        .main > div {{
+            padding-top: 2rem;
+        }}
+
+        .metric-card {{
+            background: {card_bg};
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px solid {border};
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }}
+
+        .metric-value {{
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+            color: {text};
+        }}
+
+        .metric-label {{
+            font-size: 0.9rem;
+            color: {label};
+            margin: 0;
+            margin-bottom: 0.5rem;
+        }}
+
+        .metric-trend {{
+            font-size: 0.8rem;
+            margin: 0;
+        }}
+
+        .trend-positive {{
+            color: #28a745;
+        }}
+
+        .trend-negative {{
+            color: #dc3545;
+        }}
+
+
+        .bottom-card {{
+            background: {card_bg};
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px solid {border};
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }}
+
+        .stSelectbox > div > div > div {{
+            background-color: {card_bg};
+        }}
+
+        [data-testid="stWidgetLabel"],
+        [data-testid="stWidgetLabel"] p {{
+            color: {text} !important;
+        }}
+
+        [data-baseweb="select"] * {{
+            color: {text} !important;
+        }}
+
+        .stars {{
+            color: #ffc107;
+            font-size: 1.2rem;
+        }}
+    </style>
+    """
 
 
 @st.cache_data
@@ -131,8 +151,12 @@ def format_trend(current, previous):
     return f'<span class="{color_class}">{arrow} {abs(change_pct):.2f}%</span>'
 
 
-def create_revenue_trend_chart(current_data, previous_data, current_year, previous_year):
+def create_revenue_trend_chart(current_data, previous_data, current_year, previous_year, dark_mode=False):
     """Create revenue trend line chart"""
+    plot_bg = "#1c1e26" if dark_mode else "white"
+    grid_color = "#3d4048" if dark_mode else "#f0f0f0"
+    font_color = "#fafafa" if dark_mode else "#1f1f1f"
+
     fig = go.Figure()
     
     # Check if we have multiple months of data
@@ -189,26 +213,32 @@ def create_revenue_trend_chart(current_data, previous_data, current_year, previo
     fig.update_layout(
         showlegend=True,
         hovermode='x unified',
-        plot_bgcolor='white',
-        xaxis=dict(showgrid=True, gridcolor='#f0f0f0'),
-        yaxis=dict(showgrid=True, gridcolor='#f0f0f0', tickformat='$,.0f'),
+        plot_bgcolor=plot_bg,
+        paper_bgcolor=plot_bg,
+        font=dict(color=font_color),
+        xaxis=dict(showgrid=True, gridcolor=grid_color),
+        yaxis=dict(showgrid=True, gridcolor=grid_color, tickformat='$,.0f'),
         height=350,
         margin=dict(t=50, b=50, l=50, r=50)
     )
-    
+
     return fig
 
 
-def create_category_chart(sales_data):
+def create_category_chart(sales_data, dark_mode=False):
     """Create top 10 categories bar chart"""
+    plot_bg = "#1c1e26" if dark_mode else "white"
+    grid_color = "#3d4048" if dark_mode else "#f0f0f0"
+    font_color = "#fafafa" if dark_mode else "#1f1f1f"
+
     if 'product_category_name' not in sales_data.columns:
         return go.Figure().add_annotation(
             text="Product category data not available",
             xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False
         )
-    
+
     category_revenue = sales_data.groupby('product_category_name')['price'].sum().sort_values(ascending=True).tail(10)
-    
+
     fig = go.Figure(data=[
         go.Bar(
             y=category_revenue.index,
@@ -224,32 +254,37 @@ def create_category_chart(sales_data):
             hovertemplate='%{y}<br>Revenue: %{text}<extra></extra>'
         )
     ])
-    
+
     fig.update_layout(
         title="Top 10 Product Categories",
         xaxis_title="Revenue",
         yaxis_title="",
-        plot_bgcolor='white',
-        xaxis=dict(showgrid=True, gridcolor='#f0f0f0', tickformat='$,.0f'),
+        plot_bgcolor=plot_bg,
+        paper_bgcolor=plot_bg,
+        font=dict(color=font_color),
+        xaxis=dict(showgrid=True, gridcolor=grid_color, tickformat='$,.0f'),
         yaxis=dict(showgrid=False),
         height=350,
         margin=dict(t=50, b=50, l=150, r=50)
     )
-    
+
     return fig
 
 
-def create_state_map(sales_data):
+def create_state_map(sales_data, dark_mode=False):
     """Create US choropleth map"""
+    plot_bg = "#1c1e26" if dark_mode else "white"
+    font_color = "#fafafa" if dark_mode else "#1f1f1f"
+
     if 'customer_state' not in sales_data.columns:
         return go.Figure().add_annotation(
             text="Geographic data not available",
             xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False
         )
-    
+
     state_revenue = sales_data.groupby('customer_state')['price'].sum().reset_index()
     state_revenue.columns = ['state', 'revenue']
-    
+
     fig = go.Figure(data=go.Choropleth(
         locations=state_revenue['state'],
         z=state_revenue['revenue'],
@@ -258,19 +293,26 @@ def create_state_map(sales_data):
         showscale=True,
         colorbar=dict(title="Revenue", tickformat='$,.0f')
     ))
-    
+
     fig.update_layout(
         title="Revenue by State",
         geo_scope='usa',
+        paper_bgcolor=plot_bg,
+        font=dict(color=font_color),
+        geo=dict(bgcolor=plot_bg, lakecolor=plot_bg),
         height=350,
         margin=dict(t=50, b=50, l=50, r=50)
     )
-    
+
     return fig
 
 
-def create_satisfaction_delivery_chart(sales_data):
+def create_satisfaction_delivery_chart(sales_data, dark_mode=False):
     """Create satisfaction vs delivery time chart"""
+    plot_bg = "#1c1e26" if dark_mode else "white"
+    grid_color = "#3d4048" if dark_mode else "#f0f0f0"
+    font_color = "#fafafa" if dark_mode else "#1f1f1f"
+
     if 'delivery_days' not in sales_data.columns or 'review_score' not in sales_data.columns:
         return go.Figure().add_annotation(
             text="Delivery or review data not available",
@@ -317,9 +359,11 @@ def create_satisfaction_delivery_chart(sales_data):
         title="Customer Satisfaction vs Delivery Time",
         xaxis_title="Delivery Time",
         yaxis_title="Average Review Score",
-        plot_bgcolor='white',
+        plot_bgcolor=plot_bg,
+        paper_bgcolor=plot_bg,
+        font=dict(color=font_color),
         xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=True, gridcolor='#f0f0f0', range=[0, 5]),
+        yaxis=dict(showgrid=True, gridcolor=grid_color, range=[0, 5]),
         height=350,
         margin=dict(t=50, b=50, l=50, r=50)
     )
@@ -329,20 +373,28 @@ def create_satisfaction_delivery_chart(sales_data):
 
 def main():
     """Main dashboard function"""
-    
+
+    if "dark_mode" not in st.session_state:
+        st.session_state.dark_mode = False
+
     # Load data
     loader, processed_data = load_dashboard_data()
-    
+
     if loader is None:
         st.error("Failed to load data. Please check your data files.")
         return
-    
-    # Header with title and date filters
-    col1, col2, col3 = st.columns([2, 1, 1])
-    
+
+    # Header with title, date filters, and dark mode toggle
+    col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+
     with col1:
         st.title("📊 E-commerce Analytics Dashboard")
-    
+
+    with col4:
+        st.toggle("🌙 Dark Mode", key="dark_mode")
+
+    st.markdown(get_theme_css(st.session_state.dark_mode), unsafe_allow_html=True)
+
     with col2:
         # Get available years from data
         orders_data = processed_data['orders']
@@ -457,20 +509,22 @@ def main():
     chart_row1_col1, chart_row1_col2 = st.columns(2)
     chart_row2_col1, chart_row2_col2 = st.columns(2)
     
+    dark_mode = st.session_state.dark_mode
+
     with chart_row1_col1:
-        revenue_fig = create_revenue_trend_chart(current_data, previous_data, selected_year, previous_year)
+        revenue_fig = create_revenue_trend_chart(current_data, previous_data, selected_year, previous_year, dark_mode)
         st.plotly_chart(revenue_fig, use_container_width=True)
-    
+
     with chart_row1_col2:
-        category_fig = create_category_chart(current_data)
+        category_fig = create_category_chart(current_data, dark_mode)
         st.plotly_chart(category_fig, use_container_width=True)
-    
+
     with chart_row2_col1:
-        map_fig = create_state_map(current_data)
+        map_fig = create_state_map(current_data, dark_mode)
         st.plotly_chart(map_fig, use_container_width=True)
-    
+
     with chart_row2_col2:
-        satisfaction_fig = create_satisfaction_delivery_chart(current_data)
+        satisfaction_fig = create_satisfaction_delivery_chart(current_data, dark_mode)
         st.plotly_chart(satisfaction_fig, use_container_width=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
