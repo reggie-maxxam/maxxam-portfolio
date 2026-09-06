@@ -14,7 +14,7 @@ A raw exploratory-data-analysis notebook, refactored into a modular Python codeb
 | 1. Explore | [`EDA.ipynb`](EDA.ipynb) | Original exploratory analysis — ad hoc, linear, notebook-only |
 | 2. Refactor | [`EDA_Refactored.ipynb`](EDA_Refactored.ipynb) | Same analysis, parameterized and rebuilt on top of reusable modules |
 | 3. Extract | [`data_loader.py`](data_loader.py) · [`business_metrics.py`](business_metrics.py) | Data loading and metric calculations pulled out of the notebook into testable, importable modules |
-| 4. Ship | [`dashboard.py`](dashboard.py) | The same modules powering a live Streamlit dashboard — no notebook required to use it |
+| 4. Ship | [`ecom-dashboard.py`](ecom-dashboard.py) | The same modules powering a live Streamlit dashboard — no notebook required to use it |
 
 ## Screenshot
 
@@ -36,7 +36,7 @@ Analyzes an e-commerce order dataset (customers, orders, order items, products, 
 pip install -r requirements.txt
 
 # Interactive dashboard
-streamlit run dashboard.py
+streamlit run ecom-dashboard.py
 
 # Or open the notebook
 jupyter notebook EDA_Refactored.ipynb
