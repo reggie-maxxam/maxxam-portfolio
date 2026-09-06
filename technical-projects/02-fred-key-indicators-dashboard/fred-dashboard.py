@@ -80,8 +80,8 @@ def create_series_chart(df, label: str, dark_mode: bool) -> go.Figure:
         plot_bgcolor=plot_bg,
         paper_bgcolor=plot_bg,
         font=dict(color=font_color),
-        xaxis=dict(showgrid=True, gridcolor=grid_color),
-        yaxis=dict(showgrid=True, gridcolor=grid_color),
+        xaxis=dict(showgrid=True, gridcolor=grid_color, tickfont=dict(color=font_color), linecolor=grid_color),
+        yaxis=dict(showgrid=True, gridcolor=grid_color, tickfont=dict(color=font_color), linecolor=grid_color),
         height=320,
         margin=dict(t=50, b=40, l=50, r=30),
     )
