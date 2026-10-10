@@ -23,8 +23,8 @@ Functional workflows with placeholder credentials. Configure and run immediately
 | File | What It Does | Stack |
 |------|-------------|-------|
 | [WF-1.1-Smart-Waitlist-System.json](free/WF-1.1-Smart-Waitlist-System.json) | Automated waitlist management — polls for open slots, notifies waitlisted clients by SMS | Cal.com · Twilio · Google Sheets |
-| [maxxam-linkedin-poster.json](free/maxxam-linkedin-poster.json) | Reads content calendar sheet → posts to LinkedIn via OAuth2 | Google Sheets · LinkedIn API |
-| [maxxam-sheet-writer.json](free/maxxam-sheet-writer.json) | Webhook → writes structured records to Google Sheets content calendar | Google Sheets |
+| [maxxam-linkedin-poster.json](free/maxxam-linkedin-poster.json) | Scheduled publisher — reads the content calendar, posts text or image updates to LinkedIn, writes the result back to the row | Google Sheets · Google Drive · LinkedIn API |
+| [maxxam-sheet-writer.json](free/maxxam-sheet-writer.json) | Webhook → validates and appends a structured row to the content calendar | Google Sheets |
 | [airbnb-padsplit-market-analyzer.json](free/airbnb-padsplit-market-analyzer.json) | PadSplit co-living market analyzer — evaluates properties against the 75/55 occupancy rule | n8n native nodes |
 | [padsplit-75-55-rule.json](free/padsplit-75-55-rule.json) | PadSplit 75/55 rule calculator — companion to the market analyzer | n8n native nodes |
 
@@ -34,6 +34,29 @@ Functional workflows with placeholder credentials. Configure and run immediately
 3. Replace all `{{ PLACEHOLDER }}` values with your own credentials/IDs
 4. Connect your credentials in each integration node
 5. Test with the Manual Trigger before activating
+
+### Content calendar pair — notes from running it in production
+
+`maxxam-sheet-writer.json` and `maxxam-linkedin-poster.json` are two halves of one pipeline:
+something writes an approved row, and the poster publishes it on its scheduled date. Both were
+rebuilt in October 2026 from the live instance after an end-to-end debugging pass. The sticky notes
+inside the poster carry the full list; these are the ones that cost the most time.
+
+| Trap | What happens | Fix |
+|---|---|---|
+| Filtering on `scheduled_date` | The sheet column is `schedule_date`. The filter matches nothing, silently, forever | Match the column name exactly |
+| Merge node set to `combine` | Only one branch ever fires, so the merge yields nothing, the write-back never runs, and the row **reposts every day** | Use `append` |
+| Reading `$json.id` from the LinkedIn node | It returns `urn`, so the saved post URL is blank | Build the URL from `$json.urn` |
+| HTTP node for the image | Returns parsed text, not binary. Public `uc?export=download` links return a sign-in page | Use a Google Drive node with `/file/d/<ID>/view` |
+| Any non-empty `image_url` | Routing tests non-empty, not valid. A placeholder like `GRAPHIC_NEEDED` sends the row down the image branch and fails it | Real link, or leave empty |
+| No workflow timezone | The server default applies and `0 8 * * 1-5` is not your 8am | Set Workflow Settings → Timezone first |
+| Deploying a webhook node via the API without a `webhookId` | Workflow reports `active: true` but the production URL returns 404 | Set a UUID, then deactivate → activate |
+
+Two further notes. Error outputs are wired from both LinkedIn nodes into **Mark Failed**, and n8n
+reports an execution as *success* when an error is caught that way — judge outcomes by the sheet's
+`status` column, not the execution list. And LinkedIn access tokens expire every 60 days with no
+refresh token outside its partner programme, so the credential needs reconnecting by hand on a
+schedule.
 
 ---
 

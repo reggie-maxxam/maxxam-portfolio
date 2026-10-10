@@ -1,7 +1,15 @@
 {
-  "name": "MAXXAM AI — LinkedIn Daily Poster (Personal Profile)",
+  "name": "MAXXAM AI — LinkedIn Poster",
   "nodes": [
     {
+      "name": "Schedule Trigger",
+      "notes": "Runs Mon-Fri at 8:00 AM. Adjust cron to match your preferred post time.",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        128
+      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -11,17 +19,17 @@
             }
           ]
         }
-      },
-      "id": "a1b2c3d4-0001-0001-0001-000000000001",
-      "name": "Schedule Trigger",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [240, 300],
-      "notes": "Runs Mon-Fri at 8:00 AM. Adjust cron to match your preferred post time."
+      }
     },
     {
+      "name": "Read Content Calendar",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        128
+      ],
       "parameters": {
-        "operation": "read",
         "documentId": {
           "__rl": true,
           "value": "YOUR_GOOGLE_SHEET_ID",
@@ -29,26 +37,28 @@
         },
         "sheetName": {
           "__rl": true,
-          "value": "Content_Calendar",
-          "mode": "name"
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Content_Calendar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
         },
-        "options": {
-          "headerRow": 1
-        }
+        "options": {}
       },
-      "id": "a1b2c3d4-0002-0002-0002-000000000002",
-      "name": "Read Content Calendar",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.4,
-      "position": [460, 300],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "REPLACE_ME",
-          "name": "MXAI - Google"
+          "name": "YOUR - Google Sheets"
         }
       }
     },
     {
+      "name": "Filter: Approved LinkedIn Posts for Today",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        128
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -77,7 +87,7 @@
             },
             {
               "id": "cond-003",
-              "leftValue": "={{ $json.scheduled_date }}",
+              "leftValue": "={{ $json.schedule_date }}",
               "rightValue": "={{ $now.format('yyyy-MM-dd') }}",
               "operator": {
                 "type": "string",
@@ -86,19 +96,25 @@
             }
           ],
           "combinator": "and"
-        }
-      },
-      "id": "a1b2c3d4-0003-0003-0003-000000000003",
-      "name": "Filter: Approved LinkedIn Posts for Today",
-      "type": "n8n-nodes-base.filter",
-      "typeVersion": 2,
-      "position": [680, 300]
+        },
+        "options": {}
+      }
     },
     {
+      "name": "Has Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        128
+      ],
       "parameters": {
         "conditions": {
           "options": {
-            "caseSensitive": false
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -112,78 +128,101 @@
             }
           ],
           "combinator": "and"
-        }
-      },
-      "id": "a1b2c3d4-0004-0004-0004-000000000004",
-      "name": "Has Image?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [900, 300]
+        },
+        "options": {}
+      }
     },
     {
+      "name": "Download Image",
+      "notes": "Downloads image asset for posts that include an image.",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "onError": "continueErrorOutput",
+      "position": [
+        0,
+        0
+      ],
       "parameters": {
-        "url": "={{ $json.image_url }}",
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $json.image_url }}"
+        },
         "options": {}
       },
-      "id": "a1b2c3d4-0005-0005-0005-000000000005",
-      "name": "Download Image",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1120, 180],
-      "notes": "Downloads image asset for posts that include an image."
-    },
-    {
-      "parameters": {
-        "person": "urn:li:person:YOUR_LINKEDIN_PERSON_URN",
-        "text": "={{ $('Filter: Approved LinkedIn Posts for Today').item.json.hook }}\n\n{{ $('Filter: Approved LinkedIn Posts for Today').item.json.body }}\n\n{{ $('Filter: Approved LinkedIn Posts for Today').item.json.cta }}\n\n\ud83d\udd17 Follow MAXXAM AI for daily automation insights \u2192 www.maxxam.ai",
-        "shareMediaCategory": "IMAGE",
-        "additionalFields": {}
-      },
-      "id": "a1b2c3d4-0006-0006-0006-000000000006",
-      "name": "Post to LinkedIn (with image)",
-      "type": "n8n-nodes-base.linkedIn",
-      "typeVersion": 1,
-      "position": [1340, 180],
       "credentials": {
-        "linkedInOAuth2Api": {
-          "id": "LINKEDIN_CREDENTIAL_ID",
-          "name": "LinkedIn OAuth2"
-        }
-      },
-      "notes": "Personal profile posting only — uses w_member_social scope. Replace YOUR_LINKEDIN_PERSON_URN with your personal LinkedIn URN. To find it: go to linkedin.com/in/YOUR-PROFILE, click More > Share profile, copy the URL and extract the ID, OR call https://api.linkedin.com/v2/userinfo after OAuth to get the sub field."
-    },
-    {
-      "parameters": {
-        "person": "urn:li:person:YOUR_LINKEDIN_PERSON_URN",
-        "text": "={{ $json.hook }}\n\n{{ $json.body }}\n\n{{ $json.cta }}\n\n\ud83d\udd17 Follow MAXXAM AI for daily automation insights \u2192 www.maxxam.ai",
-        "shareMediaCategory": "NONE",
-        "additionalFields": {}
-      },
-      "id": "a1b2c3d4-0007-0007-0007-000000000007",
-      "name": "Post to LinkedIn (text only)",
-      "type": "n8n-nodes-base.linkedIn",
-      "typeVersion": 1,
-      "position": [1340, 420],
-      "credentials": {
-        "linkedInOAuth2Api": {
-          "id": "LINKEDIN_CREDENTIAL_ID",
-          "name": "LinkedIn OAuth2"
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - Google Drive"
         }
       }
     },
     {
+      "name": "Post to LinkedIn (with image)",
+      "notes": "Replace YOUR_LINKEDIN_PERSON_URN with your LinkedIn person URN or organization URN for company page.",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput",
+      "position": [
+        224,
+        0
+      ],
       "parameters": {
-        "mode": "combine",
-        "combineBy": "combineAll",
-        "options": {}
+        "person": "YOUR_LINKEDIN_PERSON_URN",
+        "text": "={{ $('Filter: Approved LinkedIn Posts for Today').item.json.hook }}\n\n{{ $('Filter: Approved LinkedIn Posts for Today').item.json.body }}\n\n{{ $('Filter: Approved LinkedIn Posts for Today').item.json.cta }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
       },
-      "id": "a1b2c3d4-0008-0008-0008-000000000008",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - LinkedIn"
+        }
+      }
+    },
+    {
+      "name": "Post to LinkedIn (text only)",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "onError": "continueErrorOutput",
+      "position": [
+        224,
+        240
+      ],
+      "parameters": {
+        "person": "YOUR_LINKEDIN_PERSON_URN",
+        "text": "={{ $json.hook }}\n\n{{ $json.body }}\n\n{{ $json.cta }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - LinkedIn"
+        }
+      }
+    },
+    {
       "name": "Merge Post Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [1560, 300]
+      "position": [
+        448,
+        128
+      ],
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      }
     },
     {
+      "name": "Update Sheet: Mark Posted",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        128
+      ],
       "parameters": {
         "operation": "update",
         "documentId": {
@@ -201,54 +240,68 @@
           "value": {
             "id": "={{ $('Filter: Approved LinkedIn Posts for Today').item.json.id }}",
             "status": "posted",
-            "posted_at": "={{ $now.toISO() }}",
-            "post_url": "={{ $json.id ? 'https://www.linkedin.com/feed/update/' + $json.id : '' }}"
+            "pos_url": "={{ $json.urn ? 'https://www.linkedin.com/feed/update/' + $json.urn : '' }}",
+            "notes": "={{ 'Auto-posted ' + $now.toISO() }}"
           },
-          "matchingColumns": ["id"],
+          "matchingColumns": [
+            "id"
+          ],
           "schema": [
-            { "id": "id", "displayName": "id", "required": true, "defaultMatch": true, "display": true, "type": "string", "canBeUsedToMatch": true },
-            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
-            { "id": "posted_at", "displayName": "posted_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
-            { "id": "post_url", "displayName": "post_url", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false }
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pos_url",
+              "displayName": "pos_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
           ]
         },
         "options": {}
       },
-      "id": "a1b2c3d4-0009-0009-0009-000000000009",
-      "name": "Update Sheet: Mark Posted",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.4,
-      "position": [1780, 300],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "REPLACE_ME",
-          "name": "MXAI - Google"
+          "name": "YOUR - Google Sheets"
         }
       }
     },
     {
-      "parameters": {
-        "conditions": {
-          "conditions": [
-            {
-              "id": "err-001",
-              "leftValue": "={{ $json.error }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEquals"
-              }
-            }
-          ]
-        }
-      },
-      "id": "a1b2c3d4-0010-0010-0010-000000000010",
-      "name": "Post Failed?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [1780, 500]
-    },
-    {
+      "name": "Update Sheet: Mark Failed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        880,
+        320
+      ],
       "parameters": {
         "operation": "update",
         "documentId": {
@@ -266,77 +319,202 @@
           "value": {
             "id": "={{ $('Filter: Approved LinkedIn Posts for Today').item.json.id }}",
             "status": "failed",
-            "notes": "={{ 'Auto-post failed: ' + $json.error }}"
+            "notes": "={{ 'Auto-post failed ' + $now.toISO() + ': ' + (typeof $json.error === 'string' ? $json.error : ($json.error && $json.error.message ? $json.error.message : JSON.stringify($json.error))) }}"
           },
-          "matchingColumns": ["id"],
+          "matchingColumns": [
+            "id"
+          ],
           "schema": [
-            { "id": "id", "displayName": "id", "required": true, "defaultMatch": true, "display": true, "type": "string", "canBeUsedToMatch": true },
-            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
-            { "id": "notes", "displayName": "notes", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false }
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
           ]
         },
         "options": {}
       },
-      "id": "a1b2c3d4-0011-0011-0011-000000000011",
-      "name": "Update Sheet: Mark Failed",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.4,
-      "position": [2000, 500],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "REPLACE_ME",
-          "name": "MXAI - Google"
+          "name": "YOUR - Google Sheets"
         }
+      }
+    },
+    {
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -60
+      ],
+      "parameters": {
+        "content": "## MAXXAM AI — LinkedIn Poster\n\n**Flow:** Schedule → read Content_Calendar → filter → post → write result back.\n\nPublishes a row when **all three** are true:\n`status = approved` · `platform = LinkedIn` · `schedule_date = today`\n\nRows with a non-empty `image_url` take the image branch; everything else posts as text.\n\n**Setup**\n1. Point both Google Sheets nodes at your Content Calendar\n2. Connect a LinkedIn OAuth2 credential (Share on LinkedIn product, `w_member_social`)\n3. Set `person` on both LinkedIn nodes to your `urn:li:person:XXXX`\n4. Set Workflow Settings → Timezone BEFORE trusting the cron",
+        "height": 340,
+        "width": 460,
+        "color": 4
+      }
+    },
+    {
+      "name": "Gotchas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        320
+      ],
+      "parameters": {
+        "content": "## Hard-won gotchas — read before editing\n\n1. **Column is `schedule_date`, not `scheduled_date`.** The filter silently matches nothing if this is wrong.\n2. **Merge must be `append`, not `combine`.** Only one branch ever fires; `combine` waits for both, yields nothing, and the write-back never runs — so the row stays `approved` and reposts every day.\n3. **The LinkedIn node returns `urn`, not `id`.** Build the post URL from `$json.urn`.\n4. **Download Image is a Google Drive node, not HTTP.** A plain HTTP node returns parsed text, not binary. Public `uc?export=download` links return a sign-in page. Use `/file/d/<ID>/view` with an authenticated Drive credential.\n5. **`image_url` routes on non-empty, not on validity.** A placeholder like `GRAPHIC_NEEDED` sends the row down the image branch and fails it. Real link or empty.\n6. **Error outputs are wired.** Both LinkedIn nodes use `onError: continueErrorOutput` into Mark Failed. n8n still reports the execution as SUCCESS when an error is caught — judge outcomes by the sheet's `status`, not the execution list.\n7. **Set the workflow timezone.** Without it the server default applies and `0 8 * * 1-5` is not your 8am.\n8. **LinkedIn tokens expire every 60 days with no refresh** outside the partner programme. Reconnect via Credentials → Switch account.",
+        "height": 560,
+        "width": 520,
+        "color": 3
       }
     }
   ],
   "connections": {
     "Schedule Trigger": {
-      "main": [[{ "node": "Read Content Calendar", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Read Content Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Read Content Calendar": {
-      "main": [[{ "node": "Filter: Approved LinkedIn Posts for Today", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Filter: Approved LinkedIn Posts for Today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Filter: Approved LinkedIn Posts for Today": {
-      "main": [[{ "node": "Has Image?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Has Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Has Image?": {
       "main": [
-        [{ "node": "Download Image", "type": "main", "index": 0 }],
-        [{ "node": "Post to LinkedIn (text only)", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post to LinkedIn (text only)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Download Image": {
-      "main": [[{ "node": "Post to LinkedIn (with image)", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Post to LinkedIn (with image)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet: Mark Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Post to LinkedIn (with image)": {
-      "main": [[{ "node": "Merge Post Results", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Merge Post Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet: Mark Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Post to LinkedIn (text only)": {
-      "main": [[{ "node": "Merge Post Results", "type": "main", "index": 1 }]]
+      "main": [
+        [
+          {
+            "node": "Merge Post Results",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet: Mark Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Merge Post Results": {
       "main": [
-        [{ "node": "Update Sheet: Mark Posted", "type": "main", "index": 0 }],
-        [{ "node": "Post Failed?", "type": "main", "index": 0 }]
-      ]
-    },
-    "Post Failed?": {
-      "main": [
-        [{ "node": "Update Sheet: Mark Failed", "type": "main", "index": 0 }],
-        []
+        [
+          {
+            "node": "Update Sheet: Mark Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
   "settings": {
     "executionOrder": "v1",
-    "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": ""
+    "timezone": "America/New_York"
   },
-  "staticData": null,
-  "tags": ["maxxam-ai", "social-media", "linkedin", "content"],
-  "meta": {
-    "instanceId": "maxxam-ai"
-  }
+  "active": false
 }

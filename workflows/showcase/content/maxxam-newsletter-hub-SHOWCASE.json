@@ -3,12 +3,12 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## MAXXAM AI \u2014 Newsletter Hub\n\nHandles two functions:\n\n### A) PUBLISH (POST)\n`POST https://your-n8n-instance.example.com/webhook/maxxam-newsletter-publish`\n\nCalled by `python tools/publish_newsletter.py --issue N`\n\nWhat it does:\n1. Stores the full HTML in workflow static data (by issue number)\n2. Responds immediately with 202\n3. Reads active subscribers from Google Sheets\n4. Sends a branded teaser email to each subscriber with a 'Read Full Issue' link\n5. Updates Sent Count + Last Sent for each subscriber\n\n### B) VIEW (GET)\n`GET https://your-n8n-instance.example.com/webhook/maxxam-newsletter-view?issue=1`\n\nServes the stored full HTML newsletter as a web page.\n\n**Credential:** MXAI - Google (`REPLACE_ME`)\n**Gmail Credential:** `qLQyX1xkroegloas`\n**Activate before running publish_newsletter.py**",
+        "content": "## MAXXAM AI \u2014 Newsletter Hub\n\nHandles two functions:\n\n### A) PUBLISH (POST)\n`POST https://n8n.your-n8n-instance.example.com/webhook/maxxam-newsletter-publish`\n\nCalled by `python tools/publish_newsletter.py --issue N`\n\nWhat it does:\n1. Stores the full HTML in workflow static data (by issue number)\n2. Responds immediately with 202\n3. Reads active subscribers from Google Sheets\n4. Sends a branded teaser email to each subscriber with a 'Read Full Issue' link\n5. Updates Sent Count + Last Sent for each subscriber\n\n### B) VIEW (GET)\n`GET https://n8n.your-n8n-instance.example.com/webhook/maxxam-newsletter-view?issue=1`\n\nServes the stored full HTML newsletter as a web page.\n\n**Credential:** MXAI - Google (`REPLACE_ME`)\n**Gmail Credential:** `qLQyX1xkroegloas`\n**Activate before running publish_newsletter.py**",
         "width": 540,
         "height": 420,
         "color": 5
       },
-      "id": "cc100000-0000-4000-a000-000000000001",
+      "id": "00000000-0000-4000-8000-000000000000",
       "name": "Setup Instructions",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -24,7 +24,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "cc200000-0000-4000-a000-000000000002",
+      "id": "00000000-0000-4000-8000-000000000001",
       "name": "Publish Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -41,7 +41,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "cc300000-0000-4000-a000-000000000003",
+      "id": "00000000-0000-4000-8000-000000000002",
       "name": "View Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -55,7 +55,7 @@
       "parameters": {
         "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Store Newsletter HTML stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
       },
-      "id": "cc400000-0000-4000-a000-000000000004",
+      "id": "00000000-0000-4000-8000-000000000003",
       "name": "Store Newsletter HTML",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -72,7 +72,7 @@
           "responseCode": 202
         }
       },
-      "id": "cc500000-0000-4000-a000-000000000005",
+      "id": "00000000-0000-4000-8000-000000000004",
       "name": "Respond 202",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
@@ -96,7 +96,7 @@
         },
         "options": {}
       },
-      "id": "cc600000-0000-4000-a000-000000000006",
+      "id": "00000000-0000-4000-8000-000000000005",
       "name": "Read Active Subscribers",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
@@ -115,7 +115,7 @@
       "parameters": {
         "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Prepare Subscriber Items stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
       },
-      "id": "cc700000-0000-4000-a000-000000000007",
+      "id": "00000000-0000-4000-8000-000000000006",
       "name": "Prepare Subscriber Items",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -128,7 +128,7 @@
       "parameters": {
         "jsCode": "// \u2500\u2500 MAXXAM AI \u2014 Redacted Implementation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n//\n// Purpose: Process data at the Build Teaser Email stage\n// Inputs:  See upstream node output\n// Outputs: See downstream node input\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// \u2192 Book a discovery call: https://tinyurl.com/maxxam-call\n// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nreturn { json: {} }; // stub \u2014 see full implementation\n"
       },
-      "id": "cc800000-0000-4000-a000-000000000008",
+      "id": "00000000-0000-4000-8000-000000000007",
       "name": "Build Teaser Email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -147,7 +147,7 @@
           "senderName": "Reginald Johnson \u2014 MAXXAM AI"
         }
       },
-      "id": "cc900000-0000-4000-a000-000000000009",
+      "id": "00000000-0000-4000-8000-000000000008",
       "name": "Send Teaser Email",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
