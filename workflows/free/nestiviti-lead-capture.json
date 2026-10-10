@@ -1,0 +1,354 @@
+{
+  "name": "Nestiviti - Lead Capture (Owner + Resident)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Nestiviti — Lead Capture\n\n**What this does:** Both the Owners page form and the Residents page form on the site post here. A `formType` field (`owner` or `resident`) tells this workflow which Airtable table to write to.\n\n**Wired to the real base (2026-07-28):** Base `YOUR_AIRTABLE_BASE_ID` (Nestiviti Leads), table `YOUR_OWNER_LEADS_TABLE_ID` (Owner Leads) and `YOUR_RESIDENT_LEADS_TABLE_ID` (Resident Leads).\n\n**Setup still required before this works:**\n1. Create an Airtable Personal Access Token credential in n8n named exactly `NEST - Airtable` (scopes: data.records:read + data.records:write, access to the Nestiviti Leads base).\n2. Import this JSON into the n8n instance, then open both Airtable nodes and select the `NEST - Airtable` credential from the dropdown (the credential ID in this file is a placeholder and won't auto-resolve — pick it manually once per node).\n3. Confirm both tables have these exact field names: `Owner Leads` → Name, Contact, Property Address, Submitted At, Status. `Resident Leads` → Name, Contact, Room / Move-In, Submitted At, Status.\n4. Activate the workflow. The webhook path (`nestiviti-lead`) already matches the site's `LEAD_CAPTURE_WEBHOOK` constant — no site change needed if using the same n8n instance/domain.\n\n**Sample input (POST body):**\n`{ \"formType\": \"owner\", \"name\": \"Jordan Smith\", \"contact\": \"lead@example.com\", \"detail\": \"123 Peachtree St, Atlanta, GA\" }`\n`{ \"formType\": \"resident\", \"name\": \"Alex Lee\", \"contact\": \"555-0100\", \"detail\": \"Room A, move in Aug 15\" }`\n\n**Top failure modes:**\n- Field names in Airtable don't exactly match the columns above → node errors on execution.\n- `formType` not exactly `owner` or `resident` → routed to validation error response, not silently dropped.\n- CORS: Respond to Webhook nodes set `Access-Control-Allow-Origin: *` as a safety net if the site lives on a different domain.\n\n**Not built:** any notification (Telegram/email) when a new lead lands — add a node after each Airtable Create if you want to be pinged per lead.",
+        "height": 560,
+        "width": 480
+      },
+      "name": "Overview & Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nestiviti-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Lead Capture Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        0
+      ],
+      "webhookId": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst formType = (body.formType || '').toString().trim().toLowerCase();\nconst name = (body.name || '').toString().trim();\nconst contact = (body.contact || '').toString().trim();\nconst detail = (body.detail || '').toString().trim();\n\nconst validType = formType === 'owner' || formType === 'resident';\nconst valid = !!name && !!contact && validType;\n\nreturn [{\n  json: {\n    valid,\n    formType,\n    name,\n    contact,\n    detail,\n    submittedAt: new Date().toISOString(),\n    error: valid ? null : 'Please fill in your name and contact info.'\n  }\n}];"
+      },
+      "name": "Validate Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-lead-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Lead Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "cond-owner",
+                    "leftValue": "={{ $json.formType }}",
+                    "rightValue": "owner",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "cond-resident",
+                    "leftValue": "={{ $json.formType }}",
+                    "rightValue": "resident",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Route By Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        420,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "base": {
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "mode": "id",
+          "value": "YOUR_OWNER_LEADS_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Contact": "={{ $json.contact }}",
+            "Property Address": "={{ $json.detail }}",
+            "Submitted At": "={{ $json.submittedAt }}",
+            "Status": "New"
+          }
+        },
+        "options": {}
+      },
+      "name": "Create Owner Lead",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        -220
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "base": {
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "mode": "id",
+          "value": "YOUR_RESIDENT_LEADS_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Contact": "={{ $json.contact }}",
+            "Room / Move-In": "={{ $json.detail }}",
+            "Submitted At": "={{ $json.submittedAt }}",
+            "Status": "New"
+          }
+        },
+        "options": {}
+      },
+      "name": "Create Resident Lead",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        20
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: \"Thanks — we'll be in touch soon.\" }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond — Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        900,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, message: $json.error }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond — Invalid Submission",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        420,
+        140
+      ]
+    }
+  ],
+  "connections": {
+    "Lead Capture Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Lead": {
+      "main": [
+        [
+          {
+            "node": "Lead Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Valid?": {
+      "main": [
+        [
+          {
+            "node": "Route By Type",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Invalid Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route By Type": {
+      "main": [
+        [
+          {
+            "node": "Create Owner Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Resident Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Owner Lead": {
+      "main": [
+        [
+          {
+            "node": "Respond — Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Resident Lead": {
+      "main": [
+        [
+          {
+            "node": "Respond — Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  },
+  "active": false
+}

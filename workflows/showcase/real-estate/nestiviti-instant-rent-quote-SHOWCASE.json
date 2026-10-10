@@ -1,0 +1,539 @@
+{
+  "name": "Nestiviti - Instant Rent Quote",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Nestiviti — Instant Rent Quote\n\n**What this does:** Owner enters a property address + name + email on the site's rent-quote widget → this workflow searches the live web for comparable rent data → an AI model estimates a fair monthly market rent → adds a 10% owner-lease premium → returns both numbers to the page instantly AND emails the same numbers to the owner AND queues them into a 4-part nurture sequence (see the separate `nestiviti_n8n_nurture_sequence_workflow.json`).\n\n**Setup required before this works:**\n1. Tavily + Anthropic credentials (`NEST - Tavily API`, Anthropic) — same as before, unchanged.\n2. Sign up for Resend (resend.com), verify the nestiviti.com sending domain (adds DNS records — do this in your DNS host's panel, likely IONOS since that's where the domain is hosted), get an API key.\n3. Add an \"HTTP Header Auth\" credential named `NEST - Resend` with header `Authorization` = `Bearer <your-resend-key>`. Attach it to the \"Send Quote Email\" node.\n4. Create a `Quote Nurture Queue` table in the same Nestiviti Leads Airtable base (YOUR_AIRTABLE_BASE_ID), with fields: Name, Email, Property Address, Fair Market Rent, Lease Offer, Sequence Step (number), Next Send Date (date), Status (single line text: active/completed).\n5. Activate the workflow, then copy the Production webhook URL into the site's `RENT_QUOTE_WEBHOOK` constant.\n\n**Sample input (POST body):** `{ \"address\": \"123 Peachtree St, Atlanta, GA\", \"name\": \"Jordan Smith\", \"email\": \"lead@example.com\" }`\n\n**Sample success output:** `{ \"success\": true, \"address\": \"123 Peachtree St, Atlanta, GA\", \"fairMarketRent\": 2100, \"leaseOffer\": 2325, \"confidence\": \"medium\", \"rationale\": \"...\" }`\n\n**Top failure modes (all now return a graceful response instead of hanging or crashing):**\n- Tavily returns no useful results (empty results AND no synthesized answer) for a rural/unusual address → routed straight to the \"couldn't estimate\" response, without ever asking the AI to guess from nothing.\n- Tavily or Anthropic call errors (timeout, rate limit, auth issue) → caught via each node's error output, routed to the same \"couldn't estimate\" response instead of failing the whole execution silently.\n- AI output doesn't parse as valid JSON → same graceful fallback.\n- Missing name/email → validation error response, same as a bad address.\n- Send Quote Email / Queue Nurture Sequence set to `continueRegularOutput` on error — if Resend or Airtable hiccups, the widget still shows the estimate; the email/nurture-queue step just silently doesn't happen that one time. Worth checking n8n's execution log occasionally rather than assuming every quote also got emailed.\n- CORS: if the site is on a different domain than n8n, browsers preflight the POST. n8n handles OPTIONS automatically on Webhook nodes; the Respond to Webhook nodes also explicitly set `Access-Control-Allow-Origin: *` as a safety net.\n\nThis is an **estimate only** — always disclosed to the owner on the widget as non-binding pending a real conversation.\n\n**2026-07-28 update:** added name/email capture, immediate quote-delivery email (Email 1 of the nurture sequence, sent via Resend), and Airtable queueing for the remaining 3 emails (see `nestivity_rent_quote_nurture_sequence.md` for full copy and `nestiviti_n8n_nurture_sequence_workflow.json` for the sender).\n\n**2026-07-29 update:** `Queue Nurture Sequence` now runs BEFORE `Send Quote Email` (was parallel) so the email can include the real Airtable record ID — every email (this one plus all 3 nurture emails) now has a 'Yes, I'm interested — send me the agreement' link pointing at a new workflow, `nestiviti_n8n_lead_interested_workflow.json`. Clicking it marks the lead's Airtable Status as `interested` (stopping the nurture sequence) and emails the operator the lead's details to close personally — no e-signature/agreement automation, by design; see that workflow's own sticky note for the known GET-link/email-scanner caveat.",
+        "height": 620,
+        "width": 480
+      },
+      "name": "Overview & Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -340
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nestiviti-rent-quote",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Rent Quote Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        0
+      ],
+      "webhookId": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// -- MAXXAM AI - Redacted Implementation -------------------------\n//\n// Purpose: Normalise and validate the submitted property address\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// -> Book a discovery call: https://tinyurl.com/maxxam-call\n// ----------------------------------------------------------------\n\nreturn [{ json: {} }]; // stub - see full implementation\n"
+      },
+      "name": "Validate Address",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-valid-address",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Address Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: $json.searchQuery, search_depth: \"advanced\", max_results: 8, include_answer: true, topic: \"general\" }) }}",
+        "options": {}
+      },
+      "name": "Tavily Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        420,
+        -120
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - HTTP Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-has-results",
+              "leftValue": "={{ ($json.results || []).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "cond-has-answer",
+              "leftValue": "={{ ($json.answer || '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "name": "Has Useful Search Data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a rental market analyst. Estimate a fair monthly market rent for the property below, using ONLY the search data provided. Be conservative when data is thin.\n\nProperty address: {{ $('Validate Address').item.json.address }}\n\nWeb search results (JSON):\n{{ JSON.stringify($json.results || $json) }}\n\nTavily's synthesized answer (if present): {{ $json.answer || 'none provided' }}\n\nRespond with ONLY raw JSON, no markdown fences, no commentary, in exactly this shape:\n{\"fairMarketRent\": <integer USD/month>, \"confidence\": \"low\"|\"medium\"|\"high\", \"rationale\": \"<one sentence citing what the estimate is based on>\"}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You only output a single valid JSON object matching the requested schema. Never include markdown, code fences, or any text outside the JSON object."
+        }
+      },
+      "name": "Estimate Fair Market Rent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        860,
+        -160
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "mode": "id",
+          "value": "claude-sonnet-5"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        860,
+        60
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - Anthropic"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// -- MAXXAM AI - Redacted Implementation -------------------------\n//\n// Purpose: Derive the rent quote and confidence band from the model estimate and comparables\n//\n// This node implements proprietary MAXXAM AI logic.\n// Full implementation is available to MAXXAM AI clients.\n//\n// -> Book a discovery call: https://tinyurl.com/maxxam-call\n// ----------------------------------------------------------------\n\nreturn [{ json: {} }]; // stub - see full implementation\n"
+      },
+      "name": "Compute Quote",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-estimate-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Estimate Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify((() => { const f = $json.fields || {}; const recordId = $json.id || ''; const interestedLink = `https://your-n8n-instance.example.com/webhook/nestiviti-interested?id=${recordId}`; return { from: 'Nestiviti <hello@your-company.example.com>', to: [f.Email], subject: `Your ${f['Property Address']} number: $${f['Lease Offer']}/mo`, html: `<p>Hi ${f.Name},</p><p>Here's what came back for <strong>${f['Property Address']}</strong>:</p><p>Fair market rent: $${f['Fair Market Rent']}/mo<br>What Nestiviti would pay you: $${f['Lease Offer']}/mo</p><p>That's not a starting point for negotiation — it's the number, set above typical market rent for the area.</p><p>The question we hear most at this point: \"What if a resident stops paying, or turnover runs high?\"</p><p>Neither touches your rent. You're on a fixed lease with Nestiviti, not a room-by-room agreement with individual residents — your payment arrives on the same date every month regardless of who's living there or how often rooms turn over. That risk is ours, not yours.</p><p>This is still an estimate. A firm offer just needs a quick look at the property — nothing required from you yet. Over the next week or so we'll send a couple of short notes on how the rest of it works.</p><p><a href=\\\"${interestedLink}\\\" style=\\\"display:inline-block;background:#e8590c;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:8px 0\\\">Yes, I'm interested — send me the agreement</a></p><p><a href=\\\"https://nestiviti.com/#owners\\\">Or fill out the full form here</a></p><p>— The Nestiviti team</p>` }; })() ) }}",
+        "options": {}
+      },
+      "name": "Send Quote Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1740,
+        -560
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - HTTP Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "base": {
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "mode": "id",
+          "value": "YOUR_LEADS_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Email": "={{ $json.email }}",
+            "Property Address": "={{ $json.address }}",
+            "Fair Market Rent": "={{ $json.fairMarketRent }}",
+            "Lease Offer": "={{ $json.leaseOffer }}",
+            "Sequence Step": 2,
+            "Next Send Date": "={{ $now.plus({days: 2}).toFormat('yyyy-MM-dd') }}",
+            "Status": "active"
+          }
+        },
+        "options": {}
+      },
+      "name": "Queue Nurture Sequence",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        -560
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, address: $json.address, fairMarketRent: $json.fairMarketRent, leaseOffer: $json.leaseOffer, confidence: $json.confidence, rationale: $json.rationale }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond — Quote Ready",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1520,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, message: \"We couldn't generate an automatic estimate for that address. A real person will follow up with your number within a few business days.\" }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond — Estimate Unavailable",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1520,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, message: $json.error }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond — Invalid Address",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        420,
+        140
+      ]
+    }
+  ],
+  "connections": {
+    "Rent Quote Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Address": {
+      "main": [
+        [
+          {
+            "node": "Address Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Address Valid?": {
+      "main": [
+        [
+          {
+            "node": "Tavily Search",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Invalid Address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily Search": {
+      "main": [
+        [
+          {
+            "node": "Has Useful Search Data?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Estimate Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Useful Search Data?": {
+      "main": [
+        [
+          {
+            "node": "Estimate Fair Market Rent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Estimate Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Estimate Fair Market Rent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estimate Fair Market Rent": {
+      "main": [
+        [
+          {
+            "node": "Compute Quote",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Estimate Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Quote": {
+      "main": [
+        [
+          {
+            "node": "Estimate Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estimate Valid?": {
+      "main": [
+        [
+          {
+            "node": "Respond — Quote Ready",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Queue Nurture Sequence",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Estimate Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queue Nurture Sequence": {
+      "main": [
+        [
+          {
+            "node": "Send Quote Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  },
+  "active": false
+}

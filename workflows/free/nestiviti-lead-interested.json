@@ -1,0 +1,315 @@
+{
+  "name": "Nestiviti - Lead Interested",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Nestiviti — Lead Interested\n\n**What this does:** Handles the 'Yes, I'm interested — send me the agreement' button that appears in all 4 rent-quote emails (the immediate quote email plus the 3 nurture emails). Clicking it: looks up the lead in Airtable by record ID, flips their Status to `interested` (which stops the nurture-sequence workflow from sending them any more emails — that workflow only searches for `Status='active'`), emails the operator the lead's details so he can personally send the real lease agreement, and shows the clicker a simple thank-you page.\n\n**Deliberately NOT automated:** sending the actual lease agreement / e-signature. A multi-year property lease should get human review before it goes out — this workflow's job ends at 'notify the operator, a real person takes it from here.'\n\n**Setup required before this works:**\n1. Same `NEST - Airtable` and `NEST - Resend` credentials as the other two Nestiviti workflows — reuse them, don't recreate.\n2. Activate this workflow, then confirm its webhook path matches what the other two workflows' email templates link to: `nestiviti-interested` (both already hardcode the full URL — `https://your-n8n-instance.example.com/webhook/nestiviti-interested?id=<recordId>` — so just activating this workflow is enough, no site/constant changes needed).\n\n**Known caveat, real risk, accepted for v1:** this is a GET request triggered by clicking a link in an email. Some email clients/security scanners (Outlook Safe Links, some corporate email gateways) automatically 'pre-visit' links in incoming emails to scan for malware BEFORE a human ever opens the email — this could flip a lead's status to `interested` and notify the operator even though nobody actually clicked anything. The fix for this (a two-step 'click here, then confirm' page) was deliberately skipped to keep this simple — if false-positive 'interested' notifications start showing up, that's the likely cause, and the fix is adding an intermediate confirmation step.\n\n**Sample request:** `GET /webhook/nestiviti-interested?id=recABC123XYZ`\n\n**Top failure modes:**\n- Missing/invalid `id` query param → shows a generic 'something went wrong' page, no Airtable calls attempted.\n- Record ID not found in Airtable (stale/tampered link) → Airtable Get errors, `continueRegularOutput` routes to the same generic response rather than crashing.\n- Notification email to the operator fails (Resend hiccup) → Status still gets updated (that step runs first), so the nurture sequence still stops correctly even if the operator doesn't get pinged — worth glancing at Airtable's `Quote Nurture Queue` table occasionally for `interested` rows the operator might have missed a notification for.",
+        "height": 620,
+        "width": 480
+      },
+      "name": "Overview & Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "nestiviti-interested",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Interested Click Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        0
+      ],
+      "webhookId": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const recordId = ($json.query && $json.query.id) ? $json.query.id.toString().trim() : '';\nreturn [{ json: { valid: !!recordId, recordId } }];"
+      },
+      "name": "Extract Record ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-id-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "ID Present?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "get",
+        "base": {
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "mode": "id",
+          "value": "YOUR_LEADS_TABLE_ID"
+        },
+        "id": "={{ $json.recordId }}",
+        "options": {}
+      },
+      "name": "Get Lead",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        420,
+        -80
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "update",
+        "base": {
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "mode": "id",
+          "value": "YOUR_LEADS_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $json.id }}",
+            "Status": "interested"
+          }
+        },
+        "options": {}
+      },
+      "name": "Mark Interested",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        -160
+      ],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify((() => { const f = $json.fields || {}; return { from: 'Nestiviti <hello@your-company.example.com>', to: ['you@example.com'], subject: `Lead wants to move forward: ${f['Property Address']}`, html: `<p><strong>${f.Name}</strong> (${f.Email}) clicked 'Yes, I'm interested' for <strong>${f['Property Address']}</strong>.</p><p>Fair market rent: $${f['Fair Market Rent']}/mo<br>Lease offer sent: $${f['Lease Offer']}/mo</p><p>Their nurture sequence has been stopped. Follow up directly to send the real lease agreement.</p>` }; })() ) }}",
+        "options": {}
+      },
+      "name": "Notify Operator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        860,
+        -160
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "YOUR - HTTP Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html><html><head><meta charset=\"utf-8\"><title>Thanks — Nestiviti</title><style>body{font-family:system-ui,sans-serif;max-width:520px;margin:80px auto;text-align:center;color:#1a1a1a}h1{font-size:22px}p{color:#555;line-height:1.5}</style></head><body><h1>Got it — thank you.</h1><p>We've flagged your interest and a real person from Nestiviti will follow up directly with your lease agreement shortly.</p></body></html>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond — Thanks",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1080,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html><html><head><meta charset=\"utf-8\"><title>Nestiviti</title><style>body{font-family:system-ui,sans-serif;max-width:520px;margin:80px auto;text-align:center;color:#1a1a1a}h1{font-size:22px}p{color:#555;line-height:1.5}</style></head><body><h1>Something went wrong.</h1><p>We couldn't confirm your interest automatically — just reply to your quote email directly and we'll follow up right away.</p></body></html>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond — Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        420,
+        140
+      ]
+    }
+  ],
+  "connections": {
+    "Interested Click Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Record ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Record ID": {
+      "main": [
+        [
+          {
+            "node": "ID Present?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ID Present?": {
+      "main": [
+        [
+          {
+            "node": "Get Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lead": {
+      "main": [
+        [
+          {
+            "node": "Mark Interested",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Interested": {
+      "main": [
+        [
+          {
+            "node": "Notify Operator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Operator": {
+      "main": [
+        [
+          {
+            "node": "Respond — Thanks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  },
+  "active": false
+}

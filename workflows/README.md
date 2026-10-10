@@ -27,6 +27,8 @@ Functional workflows with placeholder credentials. Configure and run immediately
 | [maxxam-sheet-writer.json](free/maxxam-sheet-writer.json) | Webhook → validates and appends a structured row to the content calendar | Google Sheets |
 | [airbnb-padsplit-market-analyzer.json](free/airbnb-padsplit-market-analyzer.json) | PadSplit co-living market analyzer — evaluates properties against the 75/55 occupancy rule | n8n native nodes |
 | [padsplit-75-55-rule.json](free/padsplit-75-55-rule.json) | PadSplit 75/55 rule calculator — companion to the market analyzer | n8n native nodes |
+| [nestiviti-lead-capture.json](free/nestiviti-lead-capture.json) | Webhook → validate → route owner vs resident enquiries into separate Airtable tables | Webhook · Code · Airtable |
+| [nestiviti-lead-interested.json](free/nestiviti-lead-interested.json) | One-click interest capture from an email link — marks the record and notifies the operator | Webhook · Airtable · Resend |
 
 **Setup pattern for all free templates:**
 1. Import the JSON into your n8n instance
@@ -102,6 +104,8 @@ Code nodes are redacted. Import into n8n to see the full visual graph — all no
 | File | What It Demonstrates | Key Nodes |
 |------|---------------------|-----------|
 | [airbnb-burnout-detector-SHOWCASE.json](showcase/real-estate/airbnb-burnout-detector-SHOWCASE.json) | Airbnb host burnout assessment — chat interface with ML-style risk scoring | Webhook · Code · Switch |
+| [nestiviti-instant-rent-quote-SHOWCASE.json](showcase/real-estate/nestiviti-instant-rent-quote-SHOWCASE.json) | Address → live comparables research → LLM fair-market-rent estimate → emailed quote + nurture enrolment | Webhook · HTTP · Anthropic · Code · Airtable |
+| [nestiviti-nurture-sender-SHOWCASE.json](showcase/real-estate/nestiviti-nurture-sender-SHOWCASE.json) | Daily scheduled nurture sequence — selects the due step per lead, renders it, advances sequence state | Schedule · Airtable · Code · Resend |
 
 ### Nonprofit
 | File | What It Demonstrates | Key Nodes |
